@@ -6,6 +6,10 @@ on:
     - cron: '0 */5 * * *'
   workflow_dispatch:  # Allow manual start from GitHub UI
 
+concurrency:
+  group: crypto-bot
+  cancel-in-progress: true
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
