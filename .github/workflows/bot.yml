@@ -53,9 +53,25 @@ jobs:
           printf "PROMO_LINK=%s\n" "$PROMO_LINK" >> .env
           printf "PROMO_SLOGAN=%s\n" "$PROMO_SLOGAN" >> .env
 
+      - name: Verify token and imports
+        run: |
+          python - << 'PYEOF'
+          import os
+          from dotenv import load_dotenv
+          load_dotenv()
+          token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+          print(f"Token length: {len(token)}")
+          print(f"Token prefix: {token[:12]}...")
+          if not token:
+              raise SystemExit("ERROR: TELEGRAM_BOT_TOKEN is empty!")
+          import config, image_generator, certik_fetcher, crypto_facts
+          print("All imports OK")
+          PYEOF
+
       - name: Run bot (auto-restart on crash)
         run: |
           until python bot.py; do
-            echo "Bot exited with code $?. Restarting in 10 seconds..."
-            sleep 10
+            code=$?
+            echo "Bot exited with code $code. Restarting in 15 seconds..."
+            sleep 15
           done
