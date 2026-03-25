@@ -214,13 +214,23 @@ def _exchange_keyboard(exchanges: list) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(rows)
 
 
+def _exchanges_caption(exchanges: list) -> str:
+    lines = ["🏛 <b>Биржи — регистрируйтесь с бонусом!</b>\n"]
+    for ex in exchanges:
+        eid = ex.get("custom_emoji_id")
+        fb  = ex.get("emoji", "")
+        icon = f'<tg-emoji emoji-id="{eid}">{fb}</tg-emoji>' if eid else fb
+        lines.append(f"{icon} <b>{ex['name']}</b> — {ex['bonus']}")
+    return "\n".join(lines)
+
+
 async def cmd_exchanges(update: Update, context: ContextTypes.DEFAULT_TYPE):
     exchanges = exch_data.EXCHANGES
     image = imggen.generate_exchanges_image(exchanges)
-    caption = "🏛 Биржи с регистрацией через нас — бонус новым пользователям!"
     await update.message.reply_photo(
         photo=image,
-        caption=caption,
+        caption=_exchanges_caption(exchanges),
+        parse_mode="HTML",
         reply_markup=_exchange_keyboard(exchanges),
     )
 

@@ -7,6 +7,7 @@ EXCHANGES = [
     {
         "name": "Binance",
         "emoji": "⭐",
+        "custom_emoji_id": "5343922009036330426",
         "url": "https://www.binance.com/register?ref=MUFND00U",
         "bonus": "До $600 USDT бонус новым пользователям",
         "label": "⭐ Binance — Зарегистрироваться",
@@ -14,7 +15,8 @@ EXCHANGES = [
     },
     {
         "name": "Bybit",
-        "emoji": "�",
+        "emoji": "🔶",
+        "custom_emoji_id": "5341456302671436527",
         "url": "https://www.bybit.com/invite?ref=KYOKBM",
         "bonus": "До $30,000 бонус при регистрации",
         "label": "🔶 Bybit — Зарегистрироваться",
@@ -23,6 +25,7 @@ EXCHANGES = [
     {
         "name": "OKX",
         "emoji": "⬛",
+        "custom_emoji_id": "5343952653627987380",
         "url": "https://okx.com/join/28151057",
         "bonus": "До $10,000 бонус + Mystery Box",
         "label": "⬛ OKX — Зарегистрироваться",
@@ -30,7 +33,8 @@ EXCHANGES = [
     },
     {
         "name": "Bitget",
-        "emoji": "�",
+        "emoji": "💎",
+        "custom_emoji_id": "5341639246803408829",
         "url": "https://share.bitget.com/u/7PT1VLE2",
         "bonus": "До $6,200 бонус новым трейдерам",
         "label": "💎 Bitget — Зарегистрироваться",
@@ -39,6 +43,7 @@ EXCHANGES = [
     {
         "name": "BingX",
         "emoji": "🌐",
+        "custom_emoji_id": "5341570759254910472",
         "url": "https://bingxdao.com/invite/PLW3Y3/",
         "bonus": "До $5,000 бонус при регистрации",
         "label": "🌐 BingX — Зарегистрироваться",
@@ -47,6 +52,7 @@ EXCHANGES = [
     {
         "name": "KuCoin",
         "emoji": "🦁",
+        "custom_emoji_id": "5341316475716148607",
         "url": "https://www.kucoin.com/r/rf/QBSA928D",
         "bonus": "До $500 бонус для новых пользователей",
         "label": "🦁 KuCoin — Зарегистрироваться",
@@ -54,7 +60,8 @@ EXCHANGES = [
     },
     {
         "name": "MEXC",
-        "emoji": "�",
+        "emoji": "🚀",
+        "custom_emoji_id": "5341294811901104112",
         "url": "https://promote.mexc.com/r/dMYee62f0r",
         "bonus": "До $8,000 бонус при регистрации",
         "label": "🚀 MEXC — Зарегистрироваться",
@@ -63,6 +70,7 @@ EXCHANGES = [
     {
         "name": "Weex",
         "emoji": "⚡",
+        "custom_emoji_id": "5341384155810800683",
         "url": "https://weex.com/register?vipCode=2s4sb",
         "bonus": "Бонус по промокоду 2s4sb",
         "label": "⚡ Weex — Зарегистрироваться",
@@ -70,7 +78,8 @@ EXCHANGES = [
     },
     {
         "name": "Gate.io",
-        "emoji": "�",
+        "emoji": "🚪",
+        "custom_emoji_id": "5341469045839403545",
         "url": "https://www.gate.com/ru/referral/earn-together/invite/BQcWUw0K?ref=BQcWUw0K&ref_type=103",
         "bonus": "До $10,000 бонус новым пользователям",
         "label": "🚪 Gate.io — Зарегистрироваться",

@@ -14,7 +14,13 @@ async def main():
     bot = Bot(token=config.TELEGRAM_BOT_TOKEN)
     exchanges = exch_data.EXCHANGES
     image = imggen.generate_exchanges_image(exchanges)
-    caption = "🏛 Биржи с регистрацией через нас — бонус новым пользователям!"
+    lines = ["🏛 <b>Биржи — регистрируйтесь с бонусом!</b>\n"]
+    for ex in exchanges:
+        eid = ex.get("custom_emoji_id")
+        fb  = ex.get("emoji", "")
+        icon = f'<tg-emoji emoji-id="{eid}">{fb}</tg-emoji>' if eid else fb
+        lines.append(f"{icon} <b>{ex['name']}</b> — {ex['bonus']}")
+    caption = "\n".join(lines)
     row, rows = [], []
     for ex in exchanges:
         row.append(InlineKeyboardButton(f"{ex['emoji']} {ex['name']}", url=ex['url']))
@@ -27,6 +33,7 @@ async def main():
         chat_id=config.TELEGRAM_CHANNEL_ID,
         photo=image,
         caption=caption,
+        parse_mode="HTML",
         reply_markup=InlineKeyboardMarkup(rows),
     )
     print(f"Posted exchange referrals ({len(exchanges)} exchanges).")
