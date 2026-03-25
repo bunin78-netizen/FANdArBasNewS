@@ -581,13 +581,48 @@ def generate_fact_image(fact: dict) -> io.BytesIO:
     return _to_bytes(img)
 
 
+_LOGO_DIR = os.path.join(os.path.dirname(__file__), "exchange_logos")
+_LOGO_NAME_MAP = {
+    "Binance": "binance",
+    "Bybit":   "bybit",
+    "OKX":     "okx",
+    "Bitget":  "bitget",
+    "BingX":   "bingx",
+    "KuCoin":  "kucoin",
+    "MEXC":    "mexc",
+    "Weex":    "weex",
+    "Gate.io": "gate",
+}
+_LOGO_SIZE = 44
+
+
+def _load_logo(name: str) -> "Image.Image | None":
+    slug = _LOGO_NAME_MAP.get(name)
+    if not slug:
+        return None
+    path = os.path.join(_LOGO_DIR, f"{slug}.png")
+    if not os.path.exists(path):
+        return None
+    try:
+        logo = Image.open(path).convert("RGBA")
+        logo = logo.resize((_LOGO_SIZE, _LOGO_SIZE), Image.LANCZOS)
+        # Round corners: create circular mask
+        mask = Image.new("L", (_LOGO_SIZE, _LOGO_SIZE), 0)
+        from PIL import ImageDraw as _ID
+        _ID.Draw(mask).ellipse([0, 0, _LOGO_SIZE - 1, _LOGO_SIZE - 1], fill=255)
+        logo.putalpha(mask)
+        return logo
+    except Exception:
+        return None
+
+
 def generate_exchanges_image(exchanges: list[dict]) -> io.BytesIO:
-    """Generates a dark-themed card listing exchanges with referral bonuses."""
+    """Generates a dark-themed card listing exchanges with brand logos and referral bonuses."""
     HEADER_H = 82
     FOOTER_H = 40
-    ROW_H = 72
+    ROW_H = 76
     n = len(exchanges)
-    img_h = HEADER_H + n * ROW_H + 20 + FOOTER_H
+    img_h = HEADER_H + n * ROW_H + 16 + FOOTER_H
 
     img = Image.new("RGB", (IMG_W, img_h), C_BG)
     draw = ImageDraw.Draw(img)
@@ -599,21 +634,31 @@ def generate_exchanges_image(exchanges: list[dict]) -> io.BytesIO:
         ry = cy + i * ROW_H
         bg = C_CARD if i % 2 == 0 else C_CARD2
         draw.rectangle([0, ry, IMG_W, ry + ROW_H - 4], fill=bg)
-
-        # Left accent bar
         draw.rectangle([0, ry, 4, ry + ROW_H - 4], fill=C_ACCENT)
 
-        emoji = ex.get("emoji", "🔵")
-        name = ex.get("name", "")
-        desc = ex.get("desc", "")
+        name  = ex.get("name", "")
+        desc  = ex.get("desc", "")
         bonus = ex.get("bonus", "")
+        emoji = ex.get("emoji", "")
 
-        mid = ry + 8
-        draw.text((PAD + 8, mid), f"{emoji}  {name}", fill=C_TEXT, font=_font(20, bold=True))
-        draw.text((PAD + 8, mid + 26), desc, fill=C_MUTED, font=_font(13))
+        logo = _load_logo(name)
+        if logo:
+            logo_x = PAD + 4
+            logo_y = ry + (ROW_H - 4 - _LOGO_SIZE) // 2
+            bg_circle = Image.new("RGBA", (_LOGO_SIZE, _LOGO_SIZE), (40, 40, 50, 255))
+            bg_circle.paste(logo, (0, 0), logo)
+            img.paste(bg_circle, (logo_x, logo_y), bg_circle)
+            text_x = logo_x + _LOGO_SIZE + 12
+        else:
+            text_x = PAD + 8
 
-        bw = _text_w(draw, bonus, _font(14, bold=True))
-        draw.text((IMG_W - PAD - bw, mid + 10), bonus, fill=C_GREEN, font=_font(14, bold=True))
+        mid = ry + 10
+        label = f"{emoji}  {name}" if not logo else name
+        draw.text((text_x, mid), label, fill=C_TEXT, font=_font(20, bold=True))
+        draw.text((text_x, mid + 28), desc, fill=C_MUTED, font=_font(13))
+
+        bw = _text_w(draw, bonus, _font(13, bold=True))
+        draw.text((IMG_W - PAD - bw, mid + 18), bonus, fill=C_GREEN, font=_font(13, bold=True))
 
     _draw_footer(draw, img_h, source="Реферальные ссылки")
     return _to_bytes(img)
