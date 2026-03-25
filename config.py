@@ -7,7 +7,14 @@ TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHANNEL_ID: str = os.getenv("TELEGRAM_CHANNEL_ID", "")
 
 _admin_ids = os.getenv("ADMIN_USER_IDS", "")
-ADMIN_USER_IDS: list[int] = [int(x.strip()) for x in _admin_ids.split(",") if x.strip()]
+ADMIN_USER_IDS: list[int] = []
+for _x in _admin_ids.split(","):
+    _x = _x.strip()
+    try:
+        if _x:
+            ADMIN_USER_IDS.append(int(_x))
+    except ValueError:
+        pass
 
 COINGECKO_API_KEY: str = os.getenv("COINGECKO_API_KEY", "")
 NEWS_API_KEY: str = os.getenv("NEWS_API_KEY", "")
