@@ -55,18 +55,20 @@ jobs:
 
       - name: Verify token and imports
         run: |
-          python - << 'PYEOF'
-          import os
+          cat > /tmp/check.py << 'PYEOF'
+          import os, sys
+          sys.path.insert(0, os.getcwd())
           from dotenv import load_dotenv
-          load_dotenv()
-          token = os.getenv("TELEGRAM_BOT_TOKEN", "")
-          print(f"Token length: {len(token)}")
-          print(f"Token prefix: {token[:12]}...")
+          load_dotenv(dotenv_path='.env')
+          token = os.getenv('TELEGRAM_BOT_TOKEN', '')
+          print(f'Token length: {len(token)}')
+          print(f'Token prefix: {token[:12]}...')
           if not token:
-              raise SystemExit("ERROR: TELEGRAM_BOT_TOKEN is empty!")
+              sys.exit('ERROR: TELEGRAM_BOT_TOKEN is empty!')
           import config, image_generator, certik_fetcher, crypto_facts
-          print("All imports OK")
+          print('All imports OK')
           PYEOF
+          python /tmp/check.py
 
       - name: Run bot (auto-restart on crash)
         run: |
