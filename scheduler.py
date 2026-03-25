@@ -7,6 +7,7 @@ import crypto_data
 import news_fetcher
 import crypto_facts
 import certik_fetcher
+import funding_fetcher
 import image_generator as imggen
 
 logger = logging.getLogger(__name__)
@@ -153,6 +154,33 @@ async def _auto_publish_fact():
         logger.error(f"Failed to auto-publish fact: {e}")
 
 
+async def _auto_publish_funding():
+    if _bot_instance is None:
+        return
+    logger.info("Auto-publishing funding rates...")
+    rates = await funding_fetcher.fetch_funding_rates()
+    if not rates:
+        return
+    image = imggen.generate_funding_image(rates)
+    top = rates[0] if rates else {}
+    prefix = "+" if top.get("rate_pct", 0) >= 0 else ""
+    caption = (
+        f"📈 Ставки фандинга  ·  Перп. фьючерсы\n"
+        f"Лидер: {top.get('symbol','')} {prefix}{top.get('rate_pct',0):.4f}%  ·  "
+        f"Годовых: {top.get('annualized_pct',0):+.1f}%\n"
+        f"Источник: Binance Futures  ·  {config.PROMO_TERMINAL_NAME}"
+    )[:1024]
+    try:
+        await _bot_instance.send_photo(
+            chat_id=config.TELEGRAM_CHANNEL_ID,
+            photo=image,
+            caption=caption,
+            reply_markup=_promo_keyboard(),
+        )
+    except Exception as e:
+        logger.error(f"Failed to auto-publish funding: {e}")
+
+
 async def _auto_publish_promo():
     if _bot_instance is None:
         return
@@ -190,6 +218,12 @@ def start_scheduler():
         replace_existing=True,
     )
     _scheduler.add_job(
+        _auto_publish_funding,
+        trigger=IntervalTrigger(minutes=config.FUNDING_INTERVAL_MINUTES),
+        id="auto_funding",
+        replace_existing=True,
+    )
+    _scheduler.add_job(
         _auto_publish_fact,
         trigger=IntervalTrigger(minutes=config.FACT_INTERVAL_MINUTES),
         id="auto_fact",
@@ -207,6 +241,7 @@ def start_scheduler():
         f"Scheduler started: prices every {config.PRICE_INTERVAL_MINUTES}m, "
         f"news every {config.NEWS_INTERVAL_MINUTES}m, "
         f"security every {config.SECURITY_INTERVAL_MINUTES}m, "
+        f"funding every {config.FUNDING_INTERVAL_MINUTES}m, "
         f"facts every {config.FACT_INTERVAL_MINUTES}m, "
         f"promo every {config.PROMO_INTERVAL_MINUTES}m"
     )

@@ -29,6 +29,7 @@ NEWS_INTERVAL_MINUTES: int = int(os.getenv("NEWS_INTERVAL_MINUTES", "60"))
 PRICE_INTERVAL_MINUTES: int = int(os.getenv("PRICE_INTERVAL_MINUTES", "30"))
 FACT_INTERVAL_MINUTES: int = int(os.getenv("FACT_INTERVAL_MINUTES", "90"))
 SECURITY_INTERVAL_MINUTES: int = int(os.getenv("SECURITY_INTERVAL_MINUTES", "180"))
+FUNDING_INTERVAL_MINUTES: int = int(os.getenv("FUNDING_INTERVAL_MINUTES", "240"))
 TOP_COINS_COUNT: int = int(os.getenv("TOP_COINS_COUNT", "10"))
 
 COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3"
