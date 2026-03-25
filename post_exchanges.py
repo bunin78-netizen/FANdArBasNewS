@@ -15,15 +15,19 @@ async def main():
     exchanges = exch_data.EXCHANGES
     image = imggen.generate_exchanges_image(exchanges)
     caption = "🏛 Биржи с регистрацией через нас — бонус новым пользователям!"
-    buttons = [
-        [InlineKeyboardButton(f"{ex['emoji']} {ex['name']}", url=ex['url'])]
-        for ex in exchanges
-    ]
+    row, rows = [], []
+    for ex in exchanges:
+        row.append(InlineKeyboardButton(f"{ex['emoji']} {ex['name']}", url=ex['url']))
+        if len(row) == 3:
+            rows.append(row)
+            row = []
+    if row:
+        rows.append(row)
     await bot.send_photo(
         chat_id=config.TELEGRAM_CHANNEL_ID,
         photo=image,
         caption=caption,
-        reply_markup=InlineKeyboardMarkup(buttons),
+        reply_markup=InlineKeyboardMarkup(rows),
     )
     print(f"Posted exchange referrals ({len(exchanges)} exchanges).")
     await bot.close()

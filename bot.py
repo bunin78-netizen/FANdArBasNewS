@@ -201,18 +201,27 @@ async def cmd_trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+def _exchange_keyboard(exchanges: list) -> InlineKeyboardMarkup:
+    """Build a 3-column icon grid of exchange buttons."""
+    row, rows = [], []
+    for i, ex in enumerate(exchanges):
+        row.append(InlineKeyboardButton(f"{ex['emoji']} {ex['name']}", url=ex['url']))
+        if len(row) == 3:
+            rows.append(row)
+            row = []
+    if row:
+        rows.append(row)
+    return InlineKeyboardMarkup(rows)
+
+
 async def cmd_exchanges(update: Update, context: ContextTypes.DEFAULT_TYPE):
     exchanges = exch_data.EXCHANGES
     image = imggen.generate_exchanges_image(exchanges)
     caption = "🏛 Биржи с регистрацией через нас — бонус новым пользователям!"
-    buttons = [
-        [InlineKeyboardButton(f"{ex['emoji']} {ex['name']}", url=ex['url'])]
-        for ex in exchanges
-    ]
     await update.message.reply_photo(
         photo=image,
         caption=caption,
-        reply_markup=InlineKeyboardMarkup(buttons),
+        reply_markup=_exchange_keyboard(exchanges),
     )
 
 
