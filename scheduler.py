@@ -6,6 +6,7 @@ import config
 import crypto_data
 import news_fetcher
 import crypto_facts
+import certik_fetcher
 import image_generator as imggen
 
 logger = logging.getLogger(__name__)
@@ -95,6 +96,45 @@ async def _auto_publish_news():
         news_fetcher.mark_article_published(article)
 
 
+async def _auto_publish_security():
+    if _bot_instance is None:
+        return
+    logger.info("Auto-publishing security news...")
+    articles = await certik_fetcher.fetch_security_news(count=2)
+    for i, article in enumerate(articles):
+        image_url = article.get("image_url", "")
+        title = article.get("title", "")[:200]
+        source = article.get("source", "")
+        url = article.get("url", "")
+        caption = f"🔐 {title}\n\n📌 {source}\n{url}"[:1024]
+        keyboard = _promo_keyboard() if i == len(articles) - 1 else None
+        sent = False
+        if image_url:
+            try:
+                await _bot_instance.send_photo(
+                    chat_id=config.TELEGRAM_CHANNEL_ID,
+                    photo=image_url,
+                    caption=caption,
+                    reply_markup=keyboard,
+                )
+                sent = True
+            except Exception as e:
+                logger.warning(f"Security image_url failed ({e}), generating card")
+        if not sent:
+            card = imggen.generate_security_image(article)
+            try:
+                await _bot_instance.send_photo(
+                    chat_id=config.TELEGRAM_CHANNEL_ID,
+                    photo=card,
+                    caption=caption,
+                    reply_markup=keyboard,
+                )
+            except Exception as e:
+                logger.error(f"Failed to auto-publish security card: {e}")
+                continue
+        certik_fetcher.mark_published(url)
+
+
 async def _auto_publish_fact():
     if _bot_instance is None:
         return
@@ -144,6 +184,12 @@ def start_scheduler():
         replace_existing=True,
     )
     _scheduler.add_job(
+        _auto_publish_security,
+        trigger=IntervalTrigger(minutes=config.SECURITY_INTERVAL_MINUTES),
+        id="auto_security",
+        replace_existing=True,
+    )
+    _scheduler.add_job(
         _auto_publish_fact,
         trigger=IntervalTrigger(minutes=config.FACT_INTERVAL_MINUTES),
         id="auto_fact",
@@ -160,6 +206,7 @@ def start_scheduler():
     logger.info(
         f"Scheduler started: prices every {config.PRICE_INTERVAL_MINUTES}m, "
         f"news every {config.NEWS_INTERVAL_MINUTES}m, "
+        f"security every {config.SECURITY_INTERVAL_MINUTES}m, "
         f"facts every {config.FACT_INTERVAL_MINUTES}m, "
         f"promo every {config.PROMO_INTERVAL_MINUTES}m"
     )

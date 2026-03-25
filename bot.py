@@ -22,6 +22,7 @@ import config
 import crypto_data
 import news_fetcher
 import crypto_facts
+import certik_fetcher
 import image_generator as imggen
 import scheduler as sched
 
@@ -97,6 +98,39 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "*/publish\\_promo* — Опубликовать рекламу в канал\n"
     )
     await update.message.reply_text(text, parse_mode="Markdown")
+
+
+async def cmd_security(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = await update.message.reply_text("⏳ Загружаю новости безопасности...")
+    articles = await certik_fetcher.fetch_security_news(count=3)
+    if not articles:
+        await msg.edit_text(
+            "⚠️ Новостей безопасности не найдено. Попробуйте позже."
+        )
+        return
+    await msg.delete()
+    for i, article in enumerate(articles):
+        image_url = article.get("image_url", "")
+        title = article.get("title", "")[:200]
+        source = article.get("source", "")
+        url = article.get("url", "")
+        caption = f"🔐 {title}\n\n📌 {source}\n{url}"[:1024]
+        keyboard = _promo_keyboard() if i == len(articles) - 1 else None
+        sent = False
+        if image_url:
+            try:
+                await update.message.reply_photo(
+                    photo=image_url, caption=caption, reply_markup=keyboard
+                )
+                sent = True
+            except Exception:
+                pass
+        if not sent:
+            card = imggen.generate_security_image(article)
+            await update.message.reply_photo(
+                photo=card, caption=caption, reply_markup=keyboard
+            )
+        certik_fetcher.mark_published(url)
 
 
 async def cmd_fact(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -348,6 +382,7 @@ async def post_init(application: Application):
         BotCommand("trending", "Трендовые монеты"),
         BotCommand("news", "Последние новости"),
         BotCommand("coin", "Детали по монете (пример: /coin bitcoin)"),
+        BotCommand("security", "Новости безопасности CertiK & SlowMist"),
         BotCommand("fact", "Интересный факт о криптовалютах"),
         BotCommand("promo", "Наш торговый терминал"),
         BotCommand("publish_prices", "Опубликовать цены в канал [admin]"),
@@ -385,6 +420,7 @@ def main():
     application.add_handler(CommandHandler("market", cmd_market))
     application.add_handler(CommandHandler("trending", cmd_trending))
     application.add_handler(CommandHandler("news", cmd_news))
+    application.add_handler(CommandHandler("security", cmd_security))
     application.add_handler(CommandHandler("fact", cmd_fact))
     application.add_handler(CommandHandler("coin", cmd_coin))
     application.add_handler(CommandHandler("publish_prices", cmd_publish_prices))

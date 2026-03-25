@@ -429,6 +429,114 @@ def get_promo_image() -> io.BytesIO | None:
         return None
 
 
+def generate_security_image(article: dict) -> io.BytesIO:
+    """Generates a dark red-toned security alert card for CertiK/SlowMist posts."""
+    C_SEC_BG     = (12, 10, 16)
+    C_SEC_HEADER = (22, 10, 28)
+    C_SEC_ACCENT = (220, 50, 80)    # red accent
+    C_SEC_GOLD   = (255, 196, 0)
+
+    img_h = 420
+    img = Image.new("RGB", (IMG_W, img_h), C_SEC_BG)
+    draw = ImageDraw.Draw(img)
+
+    # Top accent bar
+    draw.rectangle([0, 0, IMG_W, 6], fill=C_SEC_ACCENT)
+    draw.rectangle([0, 0, IMG_W, 64], fill=C_SEC_HEADER)
+    draw.rectangle([0, 0, IMG_W, 6], fill=C_SEC_ACCENT)
+
+    # Header row: shield icon + label
+    source = article.get("source", "CertiK Skynet")
+    header_text = f"🔐  БЕЗОПАСНОСТЬ  ·  {source.upper()}"
+    hw = _text_w(draw, header_text, _font(17, bold=True))
+    draw.text(((IMG_W - hw) // 2, 20), header_text, fill=C_SEC_ACCENT, font=_font(17, bold=True))
+
+    # Title
+    title = article.get("title", "")
+    title_lines = textwrap.wrap(title, width=46)
+    ty = 82
+    for line in title_lines[:3]:
+        draw.text((PAD, ty), line, fill=C_TEXT, font=_font(22, bold=True))
+        ty += 34
+
+    # Divider
+    draw.line([PAD, ty + 8, IMG_W - PAD, ty + 8], fill=C_SEC_ACCENT, width=1)
+    ty += 22
+
+    # Summary
+    summary = article.get("summary", "")
+    if summary:
+        summary_lines = textwrap.wrap(summary[:280], width=60)
+        for line in summary_lines[:5]:
+            draw.text((PAD, ty), line, fill=C_MUTED, font=_font(17))
+            ty += 26
+
+    # Footer
+    draw.rectangle([0, img_h - 44, IMG_W, img_h], fill=C_SEC_HEADER)
+    draw.rectangle([0, img_h - 44, IMG_W, img_h - 42], fill=C_SEC_ACCENT)
+    ts = datetime.now(timezone.utc).strftime("%d.%m.%Y")
+    footer = f"skynet.certik.com  ·  {config.PROMO_TERMINAL_NAME}  ·  {ts}"
+    fw = _text_w(draw, footer, _font(14))
+    draw.text(((IMG_W - fw) // 2, img_h - 28), footer, fill=C_MUTED, font=_font(14))
+
+    # Resize to content
+    final_h = max(ty + 60, 280)
+    final_h = min(final_h, img_h)
+    img = img.crop((0, 0, IMG_W, final_h))
+
+    return _to_bytes(img)
+
+
+def generate_security_leaderboard_image(projects: list[dict]) -> io.BytesIO:
+    """Generates a security leaderboard card showing top projects by CertiK score."""
+    C_SEC_ACCENT = (220, 50, 80)
+    row_h = 36
+    header_h = 70
+    footer_h = 44
+    img_h = header_h + row_h * len(projects) + footer_h + 20
+
+    img = Image.new("RGB", (IMG_W, img_h), (12, 10, 16))
+    draw = ImageDraw.Draw(img)
+
+    draw.rectangle([0, 0, IMG_W, header_h], fill=(22, 10, 28))
+    draw.rectangle([0, 0, IMG_W, 6], fill=C_SEC_ACCENT)
+
+    header_text = "🔐  CERTIK SKYNET  ·  ТОП БЕЗОПАСНЫХ ПРОЕКТОВ"
+    hw = _text_w(draw, header_text, _font(17, bold=True))
+    draw.text(((IMG_W - hw) // 2, 20), header_text, fill=C_SEC_ACCENT, font=_font(17, bold=True))
+
+    sub = "Рейтинг безопасности  ·  CertiK Security Leaderboard"
+    sw = _text_w(draw, sub, _font(14))
+    draw.text(((IMG_W - sw) // 2, 44), sub, fill=C_MUTED, font=_font(14))
+
+    for i, proj in enumerate(projects):
+        y = header_h + i * row_h + 10
+        bg = (20, 26, 36) if i % 2 == 0 else (16, 21, 30)
+        draw.rectangle([PAD, y, IMG_W - PAD, y + row_h - 4], fill=bg)
+
+        rank_text = f"#{i + 1}"
+        draw.text((PAD + 8, y + 8), rank_text, fill=C_MUTED, font=_font(16, bold=True))
+
+        name = proj.get("name", "Unknown")[:28]
+        draw.text((PAD + 52, y + 8), name, fill=C_TEXT, font=_font(17, bold=True))
+
+        score = proj.get("score", 0)
+        score_color = C_GREEN if score >= 80 else (C_GOLD if score >= 60 else C_RED)
+        score_text = f"{score:.1f}" if isinstance(score, float) else str(score)
+        sw2 = _text_w(draw, score_text, _font(17, bold=True))
+        draw.text((IMG_W - PAD - sw2 - 8, y + 8), score_text, fill=score_color, font=_font(17, bold=True))
+
+    fy = img_h - footer_h
+    draw.rectangle([0, fy, IMG_W, img_h], fill=(22, 10, 28))
+    draw.rectangle([0, fy, IMG_W, fy + 2], fill=C_SEC_ACCENT)
+    ts = datetime.now(timezone.utc).strftime("%d.%m.%Y")
+    ft = f"skynet.certik.com  ·  {config.PROMO_TERMINAL_NAME}  ·  {ts}"
+    ftw = _text_w(draw, ft, _font(13))
+    draw.text(((IMG_W - ftw) // 2, fy + 14), ft, fill=C_MUTED, font=_font(13))
+
+    return _to_bytes(img)
+
+
 def generate_fact_image(fact: dict) -> io.BytesIO:
     """Generates a dark-themed card for an interesting crypto fact."""
     img_h = 420
