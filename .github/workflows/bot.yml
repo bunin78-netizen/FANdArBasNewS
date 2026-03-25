@@ -15,25 +15,44 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install system dependencies (fonts + lxml)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            fonts-dejavu-core \
+            fonts-liberation \
+            fonts-noto \
+            libxml2-dev \
+            libxslt1-dev
+
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: 'pip'
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: pip install -r requirements.txt
 
       - name: Create .env from secrets
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          ADMIN_USER_IDS: ${{ secrets.ADMIN_USER_IDS }}
+          PROMO_TERMINAL_NAME: ${{ secrets.PROMO_TERMINAL_NAME }}
+          PROMO_LINK: ${{ secrets.PROMO_LINK }}
+          PROMO_SLOGAN: ${{ secrets.PROMO_SLOGAN }}
         run: |
-          cat > .env << EOF
-          TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHANNEL_ID=${{ secrets.TELEGRAM_CHANNEL_ID }}
-          ADMIN_USER_IDS=${{ secrets.ADMIN_USER_IDS }}
-          PROMO_TERMINAL_NAME=${{ secrets.PROMO_TERMINAL_NAME }}
-          PROMO_LINK=${{ secrets.PROMO_LINK }}
-          PROMO_SLOGAN=${{ secrets.PROMO_SLOGAN }}
-          EOF
+          printf "TELEGRAM_BOT_TOKEN=%s\n" "$TELEGRAM_BOT_TOKEN" > .env
+          printf "TELEGRAM_CHANNEL_ID=%s\n" "$TELEGRAM_CHANNEL_ID" >> .env
+          printf "ADMIN_USER_IDS=%s\n" "$ADMIN_USER_IDS" >> .env
+          printf "PROMO_TERMINAL_NAME=%s\n" "$PROMO_TERMINAL_NAME" >> .env
+          printf "PROMO_LINK=%s\n" "$PROMO_LINK" >> .env
+          printf "PROMO_SLOGAN=%s\n" "$PROMO_SLOGAN" >> .env
 
-      - name: Run bot
-        run: python bot.py
+      - name: Run bot (auto-restart on crash)
+        run: |
+          until python bot.py; do
+            echo "Bot exited with code $?. Restarting in 10 seconds..."
+            sleep 10
+          done
