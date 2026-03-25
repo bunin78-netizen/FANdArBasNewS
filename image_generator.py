@@ -581,6 +581,44 @@ def generate_fact_image(fact: dict) -> io.BytesIO:
     return _to_bytes(img)
 
 
+def generate_exchanges_image(exchanges: list[dict]) -> io.BytesIO:
+    """Generates a dark-themed card listing exchanges with referral bonuses."""
+    HEADER_H = 82
+    FOOTER_H = 40
+    ROW_H = 72
+    n = len(exchanges)
+    img_h = HEADER_H + n * ROW_H + 20 + FOOTER_H
+
+    img = Image.new("RGB", (IMG_W, img_h), C_BG)
+    draw = ImageDraw.Draw(img)
+
+    _draw_header(draw, "БИРЖИ  ·  РЕГИСТРАЦИЯ С БОНУСОМ", "Реферальные ссылки", HEADER_H)
+
+    cy = HEADER_H + 10
+    for i, ex in enumerate(exchanges):
+        ry = cy + i * ROW_H
+        bg = C_CARD if i % 2 == 0 else C_CARD2
+        draw.rectangle([0, ry, IMG_W, ry + ROW_H - 4], fill=bg)
+
+        # Left accent bar
+        draw.rectangle([0, ry, 4, ry + ROW_H - 4], fill=C_ACCENT)
+
+        emoji = ex.get("emoji", "🔵")
+        name = ex.get("name", "")
+        desc = ex.get("desc", "")
+        bonus = ex.get("bonus", "")
+
+        mid = ry + 8
+        draw.text((PAD + 8, mid), f"{emoji}  {name}", fill=C_TEXT, font=_font(20, bold=True))
+        draw.text((PAD + 8, mid + 26), desc, fill=C_MUTED, font=_font(13))
+
+        bw = _text_w(draw, bonus, _font(14, bold=True))
+        draw.text((IMG_W - PAD - bw, mid + 10), bonus, fill=C_GREEN, font=_font(14, bold=True))
+
+    _draw_footer(draw, img_h, source="Реферальные ссылки")
+    return _to_bytes(img)
+
+
 def generate_funding_image(rates: list[dict]) -> io.BytesIO:
     """Generates a dark-themed funding rate table for top perpetuals."""
     HEADER_H = 82

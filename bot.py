@@ -24,6 +24,7 @@ import news_fetcher
 import crypto_facts
 import certik_fetcher
 import funding_fetcher
+import exchanges as exch_data
 import image_generator as imggen
 import scheduler as sched
 
@@ -197,6 +198,21 @@ async def cmd_trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=image,
         caption=caption,
         reply_markup=_promo_keyboard(),
+    )
+
+
+async def cmd_exchanges(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    exchanges = exch_data.EXCHANGES
+    image = imggen.generate_exchanges_image(exchanges)
+    caption = "🏛 Биржи с регистрацией через нас — бонус новым пользователям!"
+    buttons = [
+        [InlineKeyboardButton(f"{ex['emoji']} {ex['name']}", url=ex['url'])]
+        for ex in exchanges
+    ]
+    await update.message.reply_photo(
+        photo=image,
+        caption=caption,
+        reply_markup=InlineKeyboardMarkup(buttons),
     )
 
 
@@ -407,6 +423,7 @@ async def post_init(application: Application):
         BotCommand("news", "Последние новости"),
         BotCommand("coin", "Детали по монете (пример: /coin bitcoin)"),
         BotCommand("security", "Новости безопасности CertiK & SlowMist"),
+        BotCommand("exchanges", "Биржи с бонусом при регистрации"),
         BotCommand("funding", "Ставки фандинга перп. фьючерсов"),
         BotCommand("fact", "Интересный факт о криптовалютах"),
         BotCommand("promo", "Наш торговый терминал"),
@@ -446,6 +463,7 @@ def main():
     application.add_handler(CommandHandler("trending", cmd_trending))
     application.add_handler(CommandHandler("news", cmd_news))
     application.add_handler(CommandHandler("security", cmd_security))
+    application.add_handler(CommandHandler("exchanges", cmd_exchanges))
     application.add_handler(CommandHandler("funding", cmd_funding))
     application.add_handler(CommandHandler("fact", cmd_fact))
     application.add_handler(CommandHandler("coin", cmd_coin))
