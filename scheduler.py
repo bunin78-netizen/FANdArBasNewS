@@ -38,26 +38,6 @@ def _promo_keyboard():
     ]])
 
 
-async def _auto_publish_prices():
-    if _bot_instance is None:
-        return
-    logger.info("Auto-publishing price update...")
-    coins = await crypto_data.fetch_top_coins(config.TOP_COINS_COUNT)
-    if not coins:
-        return
-    image = imggen.generate_price_image(coins)
-    caption = f"📊 Топ {len(coins)} криптовалют по капитализации\nДанные: CoinGecko  ·  {config.PROMO_TERMINAL_NAME}"
-    try:
-        await _bot_instance.send_photo(
-            chat_id=config.TELEGRAM_CHANNEL_ID,
-            photo=image,
-            caption=caption,
-            reply_markup=_promo_keyboard(),
-        )
-    except Exception as e:
-        logger.error(f"Failed to auto-publish prices: {e}")
-
-
 async def _auto_publish_news():
     if _bot_instance is None:
         return
@@ -204,15 +184,6 @@ def start_scheduler():
     now = datetime.now(timezone.utc)
 
     _scheduler.add_job(
-        _auto_publish_prices,
-        trigger=IntervalTrigger(
-            minutes=config.PRICE_INTERVAL_MINUTES,
-            start_date=now + timedelta(minutes=2),
-        ),
-        id="auto_prices",
-        replace_existing=True,
-    )
-    _scheduler.add_job(
         _auto_publish_news,
         trigger=IntervalTrigger(
             minutes=config.NEWS_INTERVAL_MINUTES,
@@ -260,8 +231,7 @@ def start_scheduler():
         )
     _scheduler.start()
     logger.info(
-        f"Scheduler started: prices every {config.PRICE_INTERVAL_MINUTES}m, "
-        f"news every {config.NEWS_INTERVAL_MINUTES}m, "
+        f"Scheduler started: news every {config.NEWS_INTERVAL_MINUTES}m, "
         f"security every {config.SECURITY_INTERVAL_MINUTES}m, "
         f"funding every {config.FUNDING_INTERVAL_MINUTES}m, "
         f"facts every {config.FACT_INTERVAL_MINUTES}m, "
