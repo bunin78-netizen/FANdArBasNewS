@@ -62,79 +62,80 @@ async def _auto_publish_news():
     if _bot_instance is None:
         return
     logger.info("Auto-publishing news...")
-    articles = await news_fetcher.fetch_latest_news(count=3)
-    for i, article in enumerate(articles):
-        text = news_fetcher.format_news_message(article)
-        image_url = article.get("image_url", "")
-        keyboard = _promo_keyboard() if i == len(articles) - 1 else None
-        title = article.get("title", "")[:200]
-        source = article.get("source", "")
-        url = article.get("url", "")
-        caption = f"📰 {title}\n\n🔗 {source}\n{url}"[:1024]
-        sent = False
-        if image_url:
-            try:
-                await _bot_instance.send_photo(
-                    chat_id=config.TELEGRAM_CHANNEL_ID,
-                    photo=image_url,
-                    caption=caption,
-                    reply_markup=keyboard,
-                )
-                sent = True
-            except Exception as e:
-                logger.warning(f"image_url failed ({e}), generating card")
-        if not sent:
-            card = imggen.generate_news_card(article)
-            try:
-                await _bot_instance.send_photo(
-                    chat_id=config.TELEGRAM_CHANNEL_ID,
-                    photo=card,
-                    caption=caption,
-                    reply_markup=keyboard,
-                )
-            except Exception as e:
-                logger.error(f"Failed to auto-publish news card: {e}")
-                continue
-        news_fetcher.mark_article_published(article)
+    articles = await news_fetcher.fetch_latest_news(count=1)
+    if not articles:
+        return
+    article = articles[0]
+    image_url = article.get("image_url", "")
+    title = article.get("title", "")[:200]
+    source = article.get("source", "")
+    url = article.get("url", "")
+    caption = f"📰 {title}\n\n🔗 {source}\n{url}"[:1024]
+    sent = False
+    if image_url:
+        try:
+            await _bot_instance.send_photo(
+                chat_id=config.TELEGRAM_CHANNEL_ID,
+                photo=image_url,
+                caption=caption,
+                reply_markup=_promo_keyboard(),
+            )
+            sent = True
+        except Exception as e:
+            logger.warning(f"image_url failed ({e}), generating card")
+    if not sent:
+        card = imggen.generate_news_card(article)
+        try:
+            await _bot_instance.send_photo(
+                chat_id=config.TELEGRAM_CHANNEL_ID,
+                photo=card,
+                caption=caption,
+                reply_markup=_promo_keyboard(),
+            )
+        except Exception as e:
+            logger.error(f"Failed to auto-publish news card: {e}")
+            return
+    news_fetcher.mark_article_published(article)
 
 
 async def _auto_publish_security():
     if _bot_instance is None:
         return
     logger.info("Auto-publishing security news...")
-    articles = await certik_fetcher.fetch_security_news(count=2)
-    for i, article in enumerate(articles):
-        image_url = article.get("image_url", "")
-        title = article.get("title", "")[:200]
-        source = article.get("source", "")
-        url = article.get("url", "")
-        caption = f"🔐 {title}\n\n📌 {source}\n{url}"[:1024]
-        keyboard = _promo_keyboard() if i == len(articles) - 1 else None
-        sent = False
-        if image_url:
-            try:
-                await _bot_instance.send_photo(
-                    chat_id=config.TELEGRAM_CHANNEL_ID,
-                    photo=image_url,
-                    caption=caption,
-                    reply_markup=keyboard,
-                )
-                sent = True
-            except Exception as e:
-                logger.warning(f"Security image_url failed ({e}), generating card")
-        if not sent:
-            card = imggen.generate_security_image(article)
-            try:
-                await _bot_instance.send_photo(
-                    chat_id=config.TELEGRAM_CHANNEL_ID,
-                    photo=card,
-                    caption=caption,
-                    reply_markup=keyboard,
-                )
-            except Exception as e:
-                logger.error(f"Failed to auto-publish security card: {e}")
-                continue
-        certik_fetcher.mark_published(url)
+    articles = await certik_fetcher.fetch_security_news(count=1)
+    if not articles:
+        return
+    article = articles[0]
+    image_url = article.get("image_url", "")
+    title = article.get("title", "")[:200]
+    source = article.get("source", "")
+    url = article.get("url", "")
+    caption = f"🔐 {title}\n\n📌 {source}\n{url}"[:1024]
+    sent = False
+    if image_url:
+        try:
+            await _bot_instance.send_photo(
+                chat_id=config.TELEGRAM_CHANNEL_ID,
+                photo=image_url,
+                caption=caption,
+                reply_markup=_promo_keyboard(),
+            )
+            sent = True
+        except Exception as e:
+            logger.warning(f"Security image_url failed ({e}), generating card")
+    if not sent:
+        card = imggen.generate_security_image(article)
+        try:
+            await _bot_instance.send_photo(
+                chat_id=config.TELEGRAM_CHANNEL_ID,
+                photo=card,
+                caption=caption,
+                reply_markup=_promo_keyboard(),
+            )
+        except Exception as e:
+            logger.error(f"Failed to auto-publish security card: {e}")
+            return
+    certik_fetcher.mark_published(url)
 
 
 async def _auto_publish_fact():
