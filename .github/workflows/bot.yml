@@ -1,0 +1,39 @@
+name: Run Crypto Telegram Bot
+
+on:
+  schedule:
+    # Restart every 5 hours (GitHub Actions 6h limit)
+    - cron: '0 */5 * * *'
+  workflow_dispatch:  # Allow manual start from GitHub UI
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 295  # ~4h 55min — safely under 6h limit
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create .env from secrets
+        run: |
+          cat > .env << EOF
+          TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID=${{ secrets.TELEGRAM_CHANNEL_ID }}
+          ADMIN_USER_IDS=${{ secrets.ADMIN_USER_IDS }}
+          PROMO_TERMINAL_NAME=${{ secrets.PROMO_TERMINAL_NAME }}
+          PROMO_LINK=${{ secrets.PROMO_LINK }}
+          PROMO_SLOGAN=${{ secrets.PROMO_SLOGAN }}
+          EOF
+
+      - name: Run bot
+        run: python bot.py
