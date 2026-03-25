@@ -22,7 +22,7 @@ CRYPTOPANIC_API_KEY: str = os.getenv("CRYPTOPANIC_API_KEY", "")
 
 PROMO_TERMINAL_NAME: str = os.getenv("PROMO_TERMINAL_NAME", "Trading Terminal")
 PROMO_LINK: str = os.getenv("PROMO_LINK", "https://example.com")
-PROMO_SLOGAN: str = os.getenv("PROMO_SLOGAN", "Лучший терминал для торговли криптовалютой")
+PROMO_SLOGAN: str = os.getenv("PROMO_SLOGAN", "Лучший помощник в межбиржевом арбитраже")
 PROMO_INTERVAL_MINUTES: int = int(os.getenv("PROMO_INTERVAL_MINUTES", "120"))
 
 NEWS_INTERVAL_MINUTES: int = int(os.getenv("NEWS_INTERVAL_MINUTES", "120"))

@@ -376,8 +376,8 @@ def generate_news_card(article: dict) -> io.BytesIO:
 
 def get_promo_image() -> io.BytesIO | None:
     """
-    Loads a random FUNDARBAS screenshot from promo_images/ folder,
-    adds a branded footer, and returns as BytesIO.
+    Loads a random screenshot from promo_images/, overlays a branded
+    gradient panel with terminal name, slogan and link for readability.
     Returns None if folder is empty.
     """
     if not os.path.isdir(PROMO_IMAGES_DIR):
@@ -401,26 +401,61 @@ def get_promo_image() -> io.BytesIO | None:
             new_h = int(src.height * ratio)
             src = src.resize((IMG_W, new_h), Image.LANCZOS)
 
-        # Cap height at 600px
-        if src.height > 600:
-            src = src.crop((0, 0, IMG_W, 600))
+        # Ensure reasonable height
+        target_h = min(max(src.height, 420), 620)
+        if src.height < target_h:
+            canvas_bg = Image.new("RGB", (IMG_W, target_h), C_BG)
+            canvas_bg.paste(src, (0, 0))
+            src = canvas_bg
+        elif src.height > target_h:
+            src = src.crop((0, 0, IMG_W, target_h))
 
-        # Branded footer overlay
-        footer_h = 54
-        canvas = Image.new("RGB", (IMG_W, src.height + footer_h), C_HEADER)
-        canvas.paste(src, (0, 0))
+        canvas = src.copy()
+        overlay = Image.new("RGBA", (IMG_W, target_h), (0, 0, 0, 0))
+        odraw = ImageDraw.Draw(overlay)
 
+        # Gradient: bottom ~45% fades from transparent to near-black
+        grad_start = int(target_h * 0.52)
+        for y in range(grad_start, target_h):
+            progress = (y - grad_start) / (target_h - grad_start)
+            alpha = int(220 * (progress ** 0.7))
+            odraw.line([(0, y), (IMG_W, y)], fill=(10, 10, 18, alpha))
+
+        canvas = canvas.convert("RGBA")
+        canvas = Image.alpha_composite(canvas, overlay).convert("RGB")
         draw = ImageDraw.Draw(canvas)
-        fy = src.height
-        draw.rectangle([0, fy, IMG_W, fy + footer_h], fill=C_HEADER)
-        draw.rectangle([0, fy, IMG_W, fy + 2], fill=C_GOLD)
 
-        name_text = config.PROMO_TERMINAL_NAME
-        nw = _text_w(draw, name_text, _font(22, bold=True))
-        draw.text(((IMG_W - nw) // 2, fy + 14), name_text, fill=C_GOLD, font=_font(22, bold=True))
+        # Gold top accent bar
+        draw.rectangle([0, 0, IMG_W, 5], fill=C_GOLD)
+
+        # Text panel content (bottom area)
+        panel_y = grad_start + int((target_h - grad_start) * 0.12)
+
+        # Terminal name
+        name = config.PROMO_TERMINAL_NAME
+        nw = _text_w(draw, name, _font(32, bold=True))
+        draw.text(((IMG_W - nw) // 2, panel_y), name, fill=C_GOLD, font=_font(32, bold=True))
+
+        # Slogan
+        slogan = config.PROMO_SLOGAN
+        slogan_lines = textwrap.wrap(slogan, width=52)
+        sy = panel_y + 46
+        for line in slogan_lines:
+            lw = _text_w(draw, line, _font(20))
+            draw.text(((IMG_W - lw) // 2, sy), line, fill=(230, 230, 230), font=_font(20))
+            sy += 30
+
+        # Divider line
+        div_y = sy + 10
+        draw.line([IMG_W // 4, div_y, IMG_W * 3 // 4, div_y], fill=C_GOLD, width=1)
+
+        # Link
+        link = config.PROMO_LINK
+        lw = _text_w(draw, link, _font(16))
+        draw.text(((IMG_W - lw) // 2, div_y + 14), link, fill=C_ACCENT, font=_font(16))
 
         buf = io.BytesIO()
-        canvas.save(buf, format="JPEG", quality=92)
+        canvas.save(buf, format="JPEG", quality=93)
         buf.seek(0)
         buf.name = "promo.jpg"
         return buf
@@ -745,33 +780,65 @@ def generate_funding_image(rates: list[dict]) -> io.BytesIO:
 
 
 def generate_promo_card() -> io.BytesIO:
-    """Generates a fallback promo card when no screenshots are available."""
-    img_h = 400
-    img = Image.new("RGB", (IMG_W, img_h), C_HEADER)
+    """Generates a branded promo card when no screenshots are available."""
+    img_h = 480
+    img = Image.new("RGB", (IMG_W, img_h), (8, 8, 16))
     draw = ImageDraw.Draw(img)
 
-    # Gold accent bar at top
+    # Background grid pattern for depth
+    for x in range(0, IMG_W, 40):
+        draw.line([(x, 0), (x, img_h)], fill=(20, 20, 35), width=1)
+    for y in range(0, img_h, 40):
+        draw.line([(0, y), (IMG_W, y)], fill=(20, 20, 35), width=1)
+
+    # Top gold bar
     draw.rectangle([0, 0, IMG_W, 6], fill=C_GOLD)
-    draw.rectangle([0, img_h - 6, IMG_W, img_h], fill=C_GOLD)
 
-    # Center content
+    # Center glow circle (decorative)
+    cx, cy = IMG_W // 2, img_h // 2 - 20
+    for r in range(120, 0, -10):
+        alpha = int(18 * (1 - r / 120))
+        color = (255, 200, 0, alpha)
+        circle_layer = Image.new("RGBA", (IMG_W, img_h), (0, 0, 0, 0))
+        ImageDraw.Draw(circle_layer).ellipse(
+            [cx - r, cy - r, cx + r, cy + r], fill=color
+        )
+        img = Image.alpha_composite(img.convert("RGBA"), circle_layer).convert("RGB")
+        draw = ImageDraw.Draw(img)
+
+    # ⚡ icon
+    icon = "⚡"
+    iw = _text_w(draw, icon, _font(48))
+    draw.text(((IMG_W - iw) // 2, 68), icon, fill=C_GOLD, font=_font(48))
+
+    # Terminal name
     name = config.PROMO_TERMINAL_NAME
+    nw = _text_w(draw, name, _font(44, bold=True))
+    draw.text(((IMG_W - nw) // 2, 132), name, fill=C_GOLD, font=_font(44, bold=True))
+
+    # Divider
+    draw.line([IMG_W // 5, 194, IMG_W * 4 // 5, 194], fill=C_GOLD, width=2)
+
+    # Slogan
     slogan = config.PROMO_SLOGAN
-    link = config.PROMO_LINK
-
-    nw = _text_w(draw, name, _font(42, bold=True))
-    draw.text(((IMG_W - nw) // 2, 80), name, fill=C_GOLD, font=_font(42, bold=True))
-
-    sw_lines = textwrap.wrap(slogan, width=50)
-    sy = 160
-    for line in sw_lines:
-        lw = _text_w(draw, line, _font(22))
-        draw.text(((IMG_W - lw) // 2, sy), line, fill=C_TEXT, font=_font(22))
+    slogan_lines = textwrap.wrap(slogan, width=44)
+    sy = 212
+    for line in slogan_lines:
+        lw = _text_w(draw, line, _font(24))
+        draw.text(((IMG_W - lw) // 2, sy), line, fill=(220, 220, 220), font=_font(24))
         sy += 36
 
-    draw.line([IMG_W // 4, sy + 20, IMG_W * 3 // 4, sy + 20], fill=C_BORDER, width=1)
+    # Tags line
+    tags = "🔄 Арбитраж  •  📊 Аналитика  •  🚀 Торговля"
+    tw = _text_w(draw, tags, _font(16))
+    draw.text(((IMG_W - tw) // 2, sy + 14), tags, fill=C_MUTED, font=_font(16))
 
-    lw = _text_w(draw, link, _font(18))
-    draw.text(((IMG_W - lw) // 2, sy + 36), link, fill=C_ACCENT, font=_font(18))
+    # Link
+    link = config.PROMO_LINK
+    lw = _text_w(draw, link, _font(17))
+    draw.text(((IMG_W - lw) // 2, sy + 50), link, fill=C_ACCENT, font=_font(17))
+
+    # Bottom gold bar
+    draw.rectangle([0, img_h - 6, IMG_W, img_h], fill=C_GOLD)
 
     return _to_bytes(img)
