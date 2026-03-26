@@ -1,3 +1,4 @@
+import itertools
 import os
 from dotenv import load_dotenv
 
@@ -23,6 +24,21 @@ CRYPTOPANIC_API_KEY: str = os.getenv("CRYPTOPANIC_API_KEY", "")
 PROMO_TERMINAL_NAME: str = os.getenv("PROMO_TERMINAL_NAME", "Trading Terminal")
 PROMO_LINK: str = os.getenv("PROMO_LINK", "https://example.com")
 PROMO_SLOGAN: str = os.getenv("PROMO_SLOGAN", "Лучший помощник в межбиржевом арбитраже")
+
+PROMO_SLOGANS: list[str] = [
+    "FundArbas — умный арбитраж без лишнего шума.",
+    "Находим спред. Считаем риск. Действуем точно.",
+    "Спокойная автоматизация арбитража.",
+    "Меньше шума — больше системности.",
+    "Точные решения для рынка 24/7.",
+]
+_slogan_cycle = itertools.cycle(PROMO_SLOGANS)
+
+
+def next_slogan() -> str:
+    return next(_slogan_cycle)
+
+
 PROMO_INTERVAL_MINUTES: int = int(os.getenv("PROMO_INTERVAL_MINUTES", "300"))
 
 NEWS_INTERVAL_MINUTES: int = int(os.getenv("NEWS_INTERVAL_MINUTES", "300"))

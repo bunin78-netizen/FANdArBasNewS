@@ -167,8 +167,9 @@ async def _auto_publish_promo():
     if _bot_instance is None:
         return
     logger.info("Auto-publishing promo message...")
-    image = imggen.get_promo_image() or imggen.generate_promo_card()
-    caption = f"💼 {config.PROMO_TERMINAL_NAME}\n{config.PROMO_SLOGAN}\n\n👉 {config.PROMO_LINK}"
+    slogan = config.next_slogan()
+    image = imggen.get_promo_image(slogan=slogan) or imggen.generate_promo_card(slogan=slogan)
+    caption = f"💼 {config.PROMO_TERMINAL_NAME}\n{slogan}\n\n👉 {config.PROMO_LINK}"
     try:
         await _bot_instance.send_photo(
             chat_id=config.TELEGRAM_CHANNEL_ID,

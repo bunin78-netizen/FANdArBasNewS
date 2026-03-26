@@ -374,7 +374,7 @@ def generate_news_card(article: dict) -> io.BytesIO:
 
 # ── Promo image: FUNDARBAS screenshot + branded footer ────────────────────────
 
-def get_promo_image() -> io.BytesIO | None:
+def get_promo_image(slogan: str | None = None) -> io.BytesIO | None:
     """
     Loads a random screenshot from promo_images/, overlays a branded
     gradient panel with terminal name, slogan and link for readability.
@@ -437,7 +437,7 @@ def get_promo_image() -> io.BytesIO | None:
         draw.text(((IMG_W - nw) // 2, panel_y), name, fill=C_GOLD, font=_font(32, bold=True))
 
         # Slogan
-        slogan = config.PROMO_SLOGAN
+        slogan = slogan or config.PROMO_SLOGAN
         slogan_lines = textwrap.wrap(slogan, width=52)
         sy = panel_y + 46
         for line in slogan_lines:
@@ -779,7 +779,7 @@ def generate_funding_image(rates: list[dict]) -> io.BytesIO:
     return _to_bytes(img)
 
 
-def generate_promo_card() -> io.BytesIO:
+def generate_promo_card(slogan: str | None = None) -> io.BytesIO:
     """Generates a branded promo card when no screenshots are available."""
     img_h = 480
     img = Image.new("RGB", (IMG_W, img_h), (8, 8, 16))
@@ -820,7 +820,7 @@ def generate_promo_card() -> io.BytesIO:
     draw.line([IMG_W // 5, 194, IMG_W * 4 // 5, 194], fill=C_GOLD, width=2)
 
     # Slogan
-    slogan = config.PROMO_SLOGAN
+    slogan = slogan or config.PROMO_SLOGAN
     slogan_lines = textwrap.wrap(slogan, width=44)
     sy = 212
     for line in slogan_lines:

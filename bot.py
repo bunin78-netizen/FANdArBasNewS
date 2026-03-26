@@ -147,8 +147,9 @@ async def cmd_fact(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def cmd_promo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    image = imggen.get_promo_image() or imggen.generate_promo_card()
-    caption = f"💼 {config.PROMO_TERMINAL_NAME}\n{config.PROMO_SLOGAN}\n\n👉 {config.PROMO_LINK}"
+    slogan = config.next_slogan()
+    image = imggen.get_promo_image(slogan=slogan) or imggen.generate_promo_card(slogan=slogan)
+    caption = f"💼 {config.PROMO_TERMINAL_NAME}\n{slogan}\n\n👉 {config.PROMO_LINK}"
     await update.message.reply_photo(
         photo=image,
         caption=caption,
@@ -412,8 +413,9 @@ async def cmd_publish_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
 @admin_only
 async def cmd_publish_promo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = await update.message.reply_text("⏳ Публикую рекламу в канал...")
-    image = imggen.get_promo_image() or imggen.generate_promo_card()
-    caption = f"💼 {config.PROMO_TERMINAL_NAME}\n{config.PROMO_SLOGAN}\n\n👉 {config.PROMO_LINK}"
+    slogan = config.next_slogan()
+    image = imggen.get_promo_image(slogan=slogan) or imggen.generate_promo_card(slogan=slogan)
+    caption = f"💼 {config.PROMO_TERMINAL_NAME}\n{slogan}\n\n👉 {config.PROMO_LINK}"
     try:
         await context.bot.send_photo(
             chat_id=config.TELEGRAM_CHANNEL_ID,
