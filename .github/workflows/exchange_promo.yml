@@ -41,12 +41,14 @@ jobs:
           PROMO_TERMINAL_NAME: ${{ secrets.PROMO_TERMINAL_NAME }}
           PROMO_LINK: ${{ secrets.PROMO_LINK }}
           PROMO_SLOGAN: ${{ secrets.PROMO_SLOGAN }}
+          BOT_LINK: ${{ secrets.BOT_LINK }}
         run: |
           printf "TELEGRAM_BOT_TOKEN=%s\n" "$TELEGRAM_BOT_TOKEN" > .env
           printf "TELEGRAM_CHANNEL_ID=%s\n" "$TELEGRAM_CHANNEL_ID" >> .env
           printf "PROMO_TERMINAL_NAME=%s\n" "$PROMO_TERMINAL_NAME" >> .env
           printf "PROMO_LINK=%s\n" "$PROMO_LINK" >> .env
           printf "PROMO_SLOGAN=%s\n" "$PROMO_SLOGAN" >> .env
+          printf "BOT_LINK=%s\n" "$BOT_LINK" >> .env
 
       - name: Post exchange referral links
         run: python post_exchanges.py

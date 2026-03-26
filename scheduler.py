@@ -33,9 +33,10 @@ def _promo_text() -> str:
 
 def _promo_keyboard():
     from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-    return InlineKeyboardMarkup([[
-        InlineKeyboardButton(f"🚀 Открыть {config.PROMO_TERMINAL_NAME}", url=config.PROMO_LINK)
-    ]])
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton(f"🚀 Открыть {config.PROMO_TERMINAL_NAME}", url=config.PROMO_LINK)],
+        [InlineKeyboardButton("🤖 Запустить бота", url=config.BOT_LINK)],
+    ])
 
 
 async def _auto_publish_news():

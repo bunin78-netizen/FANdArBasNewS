@@ -23,6 +23,7 @@ CRYPTOPANIC_API_KEY: str = os.getenv("CRYPTOPANIC_API_KEY", "")
 
 PROMO_TERMINAL_NAME: str = os.getenv("PROMO_TERMINAL_NAME", "Trading Terminal")
 PROMO_LINK: str = os.getenv("PROMO_LINK", "https://example.com")
+BOT_LINK: str = os.getenv("BOT_LINK", "https://t.me/FUNDARBv4_bot")
 PROMO_SLOGAN: str = os.getenv("PROMO_SLOGAN", "Лучший помощник в межбиржевом арбитраже")
 
 PROMO_SLOGANS: list[str] = [

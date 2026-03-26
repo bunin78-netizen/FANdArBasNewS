@@ -40,7 +40,11 @@ def _promo_keyboard() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(
             f"🚀 Открыть {config.PROMO_TERMINAL_NAME}",
             url=config.PROMO_LINK,
-        )]
+        )],
+        [InlineKeyboardButton(
+            "🤖 Запустить бота",
+            url=config.BOT_LINK,
+        )],
     ])
 
 
