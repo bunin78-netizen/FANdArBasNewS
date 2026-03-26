@@ -187,16 +187,25 @@ def start_scheduler():
         _auto_publish_news,
         trigger=IntervalTrigger(
             minutes=config.NEWS_INTERVAL_MINUTES,
-            start_date=now + timedelta(minutes=6),
+            start_date=now + timedelta(minutes=5),
         ),
         id="auto_news",
+        replace_existing=True,
+    )
+    _scheduler.add_job(
+        _auto_publish_fact,
+        trigger=IntervalTrigger(
+            minutes=config.FACT_INTERVAL_MINUTES,
+            start_date=now + timedelta(minutes=65),
+        ),
+        id="auto_fact",
         replace_existing=True,
     )
     _scheduler.add_job(
         _auto_publish_security,
         trigger=IntervalTrigger(
             minutes=config.SECURITY_INTERVAL_MINUTES,
-            start_date=now + timedelta(minutes=10),
+            start_date=now + timedelta(minutes=125),
         ),
         id="auto_security",
         replace_existing=True,
@@ -205,18 +214,9 @@ def start_scheduler():
         _auto_publish_funding,
         trigger=IntervalTrigger(
             minutes=config.FUNDING_INTERVAL_MINUTES,
-            start_date=now + timedelta(minutes=14),
+            start_date=now + timedelta(minutes=185),
         ),
         id="auto_funding",
-        replace_existing=True,
-    )
-    _scheduler.add_job(
-        _auto_publish_fact,
-        trigger=IntervalTrigger(
-            minutes=config.FACT_INTERVAL_MINUTES,
-            start_date=now + timedelta(minutes=18),
-        ),
-        id="auto_fact",
         replace_existing=True,
     )
     if config.PROMO_INTERVAL_MINUTES > 0:
@@ -224,7 +224,7 @@ def start_scheduler():
             _auto_publish_promo,
             trigger=IntervalTrigger(
                 minutes=config.PROMO_INTERVAL_MINUTES,
-                start_date=now + timedelta(minutes=22),
+                start_date=now + timedelta(minutes=245),
             ),
             id="auto_promo",
             replace_existing=True,

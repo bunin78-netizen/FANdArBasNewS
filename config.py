@@ -23,13 +23,13 @@ CRYPTOPANIC_API_KEY: str = os.getenv("CRYPTOPANIC_API_KEY", "")
 PROMO_TERMINAL_NAME: str = os.getenv("PROMO_TERMINAL_NAME", "Trading Terminal")
 PROMO_LINK: str = os.getenv("PROMO_LINK", "https://example.com")
 PROMO_SLOGAN: str = os.getenv("PROMO_SLOGAN", "Лучший помощник в межбиржевом арбитраже")
-PROMO_INTERVAL_MINUTES: int = int(os.getenv("PROMO_INTERVAL_MINUTES", "120"))
+PROMO_INTERVAL_MINUTES: int = int(os.getenv("PROMO_INTERVAL_MINUTES", "300"))
 
-NEWS_INTERVAL_MINUTES: int = int(os.getenv("NEWS_INTERVAL_MINUTES", "120"))
+NEWS_INTERVAL_MINUTES: int = int(os.getenv("NEWS_INTERVAL_MINUTES", "300"))
 PRICE_INTERVAL_MINUTES: int = int(os.getenv("PRICE_INTERVAL_MINUTES", "10080"))
-FACT_INTERVAL_MINUTES: int = int(os.getenv("FACT_INTERVAL_MINUTES", "180"))
-SECURITY_INTERVAL_MINUTES: int = int(os.getenv("SECURITY_INTERVAL_MINUTES", "180"))
-FUNDING_INTERVAL_MINUTES: int = int(os.getenv("FUNDING_INTERVAL_MINUTES", "240"))
+FACT_INTERVAL_MINUTES: int = int(os.getenv("FACT_INTERVAL_MINUTES", "360"))
+SECURITY_INTERVAL_MINUTES: int = int(os.getenv("SECURITY_INTERVAL_MINUTES", "360"))
+FUNDING_INTERVAL_MINUTES: int = int(os.getenv("FUNDING_INTERVAL_MINUTES", "480"))
 TOP_COINS_COUNT: int = int(os.getenv("TOP_COINS_COUNT", "10"))
 
 COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3"
