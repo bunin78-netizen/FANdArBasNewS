@@ -133,8 +133,9 @@ async def cmd_security(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 pass
         if not sent:
             card = imggen.generate_security_image(article)
+            card_caption = f"📌 {source}\n{url}"[:1024]
             await update.message.reply_photo(
-                photo=card, caption=caption, reply_markup=keyboard
+                photo=card, caption=card_caption, reply_markup=keyboard
             )
         certik_fetcher.mark_published(url)
 
@@ -142,7 +143,7 @@ async def cmd_security(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def cmd_fact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     fact = crypto_facts.get_random_fact()
     image = imggen.generate_fact_image(fact)
-    caption = f"💡 {fact['emoji']} Крипто-факт\n\n{fact['text']}"[:1024]
+    caption = f"💡 {fact['emoji']} Крипто-факт  ·  {fact.get('category', '').upper()}"[:1024]
     await update.message.reply_photo(
         photo=image,
         caption=caption,
@@ -271,7 +272,6 @@ async def cmd_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     await msg.delete()
     for i, article in enumerate(articles):
-        text = news_fetcher.format_news_message(article)
         image_url = article.get("image_url", "")
         keyboard = _promo_keyboard() if i == len(articles) - 1 else None
         title = article.get("title", "")[:200]
@@ -291,10 +291,11 @@ async def cmd_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 logger.warning(f"Article image_url failed ({e}), generating card")
         if not sent:
             card = imggen.generate_news_card(article)
+            card_caption = f"🔗 {source}\n{url}"[:1024]
             try:
                 await update.message.reply_photo(
                     photo=card,
-                    caption=caption,
+                    caption=card_caption,
                     reply_markup=keyboard,
                 )
             except Exception as e:
@@ -378,7 +379,6 @@ async def cmd_publish_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     count = 0
     for i, article in enumerate(articles):
-        text = news_fetcher.format_news_message(article)
         image_url = article.get("image_url", "")
         keyboard = _promo_keyboard() if i == len(articles) - 1 else None
         title = article.get("title", "")[:200]
@@ -399,11 +399,12 @@ async def cmd_publish_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 logger.warning(f"Article image_url failed ({e}), generating card")
         if not sent:
             card = imggen.generate_news_card(article)
+            card_caption = f"🔗 {source}\n{url}"[:1024]
             try:
                 await context.bot.send_photo(
                     chat_id=config.TELEGRAM_CHANNEL_ID,
                     photo=card,
-                    caption=caption,
+                    caption=card_caption,
                     reply_markup=keyboard,
                 )
             except Exception as e:

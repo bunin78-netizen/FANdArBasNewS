@@ -66,11 +66,12 @@ async def _auto_publish_news():
             logger.warning(f"image_url failed ({e}), generating card")
     if not sent:
         card = imggen.generate_news_card(article)
+        card_caption = f"🔗 {source}\n{url}"[:1024]
         try:
             await _bot_instance.send_photo(
                 chat_id=config.TELEGRAM_CHANNEL_ID,
                 photo=card,
-                caption=caption,
+                caption=card_caption,
                 reply_markup=_promo_keyboard(),
             )
         except Exception as e:
@@ -106,11 +107,12 @@ async def _auto_publish_security():
             logger.warning(f"Security image_url failed ({e}), generating card")
     if not sent:
         card = imggen.generate_security_image(article)
+        card_caption = f"📌 {source}\n{url}"[:1024]
         try:
             await _bot_instance.send_photo(
                 chat_id=config.TELEGRAM_CHANNEL_ID,
                 photo=card,
-                caption=caption,
+                caption=card_caption,
                 reply_markup=_promo_keyboard(),
             )
         except Exception as e:
@@ -125,7 +127,7 @@ async def _auto_publish_fact():
     logger.info("Auto-publishing crypto fact...")
     fact = crypto_facts.get_random_fact()
     image = imggen.generate_fact_image(fact)
-    caption = f"💡 {fact['emoji']} Крипто-факт\n\n{fact['text']}"[:1024]
+    caption = f"💡 {fact['emoji']} Крипто-факт  ·  {fact.get('category', '').upper()}"[:1024]
     try:
         await _bot_instance.send_photo(
             chat_id=config.TELEGRAM_CHANNEL_ID,
