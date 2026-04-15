@@ -49,12 +49,7 @@ def _promo_keyboard() -> InlineKeyboardMarkup:
 
 
 def _promo_text() -> str:
-    return (
-        f"💼 *{config.PROMO_TERMINAL_NAME}*\n\n"
-        f"_{config.PROMO_SLOGAN}_\n\n"
-        f"🚀 Торгуй умнее — используй лучший инструмент!\n"
-        f"👉 [Попробовать бесплатно]({config.PROMO_LINK})"
-    )
+    return config.promo_caption()
 
 
 def admin_only(func):
@@ -153,7 +148,7 @@ async def cmd_fact(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def cmd_promo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     slogan = config.next_slogan()
     image = imggen.get_promo_image(slogan=slogan) or imggen.generate_promo_card(slogan=slogan)
-    caption = f"💼 {config.PROMO_TERMINAL_NAME}\n{slogan}\n\n👉 {config.PROMO_LINK}"
+    caption = config.promo_caption()
     await update.message.reply_photo(
         photo=image,
         caption=caption,
@@ -419,7 +414,7 @@ async def cmd_publish_promo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = await update.message.reply_text("⏳ Публикую рекламу в канал...")
     slogan = config.next_slogan()
     image = imggen.get_promo_image(slogan=slogan) or imggen.generate_promo_card(slogan=slogan)
-    caption = f"💼 {config.PROMO_TERMINAL_NAME}\n{slogan}\n\n👉 {config.PROMO_LINK}"
+    caption = config.promo_caption()
     try:
         await context.bot.send_photo(
             chat_id=config.TELEGRAM_CHANNEL_ID,

@@ -23,12 +23,7 @@ def set_bot(bot):
 
 
 def _promo_text() -> str:
-    return (
-        f"💼 *{config.PROMO_TERMINAL_NAME}*\n\n"
-        f"_{config.PROMO_SLOGAN}_\n\n"
-        f"🚀 Торгуй умнее — используй лучший инструмент!\n"
-        f"👉 [Попробовать бесплатно]({config.PROMO_LINK})"
-    )
+    return config.promo_caption()
 
 
 def _promo_keyboard():
@@ -170,7 +165,7 @@ async def _auto_publish_promo():
     logger.info("Auto-publishing promo message...")
     slogan = config.next_slogan()
     image = imggen.get_promo_image(slogan=slogan) or imggen.generate_promo_card(slogan=slogan)
-    caption = f"💼 {config.PROMO_TERMINAL_NAME}\n{slogan}\n\n👉 {config.PROMO_LINK}"
+    caption = config.promo_caption()
     try:
         await _bot_instance.send_photo(
             chat_id=config.TELEGRAM_CHANNEL_ID,
