@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime, timezone, timedelta
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
 import config
@@ -22,6 +23,15 @@ def set_bot(bot):
     _bot_instance = bot
 
 
+_MSK = timezone(timedelta(hours=3))
+
+
+def _is_quiet_hours() -> bool:
+    """Return True if current Moscow time is between 23:00 and 08:00 (no publishing)."""
+    hour = datetime.now(_MSK).hour
+    return hour >= 23 or hour < 8
+
+
 def _promo_text() -> str:
     return (
         f"💼 *{config.PROMO_TERMINAL_NAME}*\n\n"
@@ -41,6 +51,9 @@ def _promo_keyboard():
 
 async def _auto_publish_news():
     if _bot_instance is None:
+        return
+    if _is_quiet_hours():
+        logger.info("Quiet hours — skipping news publication")
         return
     logger.info("Auto-publishing news...")
     articles = await news_fetcher.fetch_latest_news(count=1)
@@ -82,6 +95,9 @@ async def _auto_publish_news():
 async def _auto_publish_security():
     if _bot_instance is None:
         return
+    if _is_quiet_hours():
+        logger.info("Quiet hours — skipping security publication")
+        return
     logger.info("Auto-publishing security news...")
     articles = await certik_fetcher.fetch_security_news(count=1)
     if not articles:
@@ -122,15 +138,17 @@ async def _auto_publish_security():
 async def _auto_publish_fact():
     if _bot_instance is None:
         return
+    if _is_quiet_hours():
+        logger.info("Quiet hours — skipping fact publication")
+        return
     logger.info("Auto-publishing crypto fact...")
     fact = crypto_facts.get_random_fact()
-    image = imggen.generate_fact_image(fact)
-    caption = f"💡 {fact['emoji']} Крипто-факт\n\n{fact['text']}"[:1024]
+    text = f"💡 {fact['emoji']} *Крипто-факт*\n\n{fact['text']}"[:4096]
     try:
-        await _bot_instance.send_photo(
+        await _bot_instance.send_message(
             chat_id=config.TELEGRAM_CHANNEL_ID,
-            photo=image,
-            caption=caption,
+            text=text,
+            parse_mode="Markdown",
             reply_markup=_promo_keyboard(),
         )
     except Exception as e:
@@ -139,6 +157,9 @@ async def _auto_publish_fact():
 
 async def _auto_publish_funding():
     if _bot_instance is None:
+        return
+    if _is_quiet_hours():
+        logger.info("Quiet hours — skipping funding publication")
         return
     logger.info("Auto-publishing funding rates...")
     rates = await funding_fetcher.fetch_funding_rates()
@@ -166,6 +187,9 @@ async def _auto_publish_funding():
 
 async def _auto_publish_promo():
     if _bot_instance is None:
+        return
+    if _is_quiet_hours():
+        logger.info("Quiet hours — skipping promo publication")
         return
     logger.info("Auto-publishing promo message...")
     slogan = config.next_slogan()
@@ -196,9 +220,11 @@ def start_scheduler():
     )
     _scheduler.add_job(
         _auto_publish_fact,
-        trigger=IntervalTrigger(
-            minutes=config.FACT_INTERVAL_MINUTES,
-            start_date=now + timedelta(minutes=65),
+        trigger=CronTrigger(
+            day_of_week="tue,fri",
+            hour=9,
+            minute=0,
+            timezone=timezone.utc,
         ),
         id="auto_fact",
         replace_existing=True,
@@ -236,7 +262,7 @@ def start_scheduler():
         f"Scheduler started: news every {config.NEWS_INTERVAL_MINUTES}m, "
         f"security every {config.SECURITY_INTERVAL_MINUTES}m, "
         f"funding every {config.FUNDING_INTERVAL_MINUTES}m, "
-        f"facts every {config.FACT_INTERVAL_MINUTES}m, "
+        f"facts twice a week (Tue/Fri 12:00 MSK), "
         f"promo every {config.PROMO_INTERVAL_MINUTES}m"
     )
 
