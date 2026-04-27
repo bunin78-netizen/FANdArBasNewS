@@ -164,6 +164,36 @@ async def _auto_publish_funding():
         logger.error(f"Failed to auto-publish funding: {e}")
 
 
+async def _auto_publish_coinglass_funding():
+    if _bot_instance is None:
+        return
+    logger.info("Auto-publishing CoinGlass top-5 funding rates...")
+    rates = await funding_fetcher.fetch_top_funding_coinglass(top_n=5)
+    if not rates:
+        logger.warning("No CoinGlass funding rates received — skipping publish")
+        return
+    image = imggen.generate_coinglass_funding_image(rates)
+    top = rates[0]
+    lines = [f"🏆 Топ-5 ставок фандинга · CoinGlass\n"]
+    for i, r in enumerate(rates, start=1):
+        p = "+" if r.get("rate_pct", 0) >= 0 else ""
+        lines.append(
+            f"{i}. {r.get('symbol','')} ({r.get('exchange','')}) "
+            f"{p}{r.get('rate_pct', 0):.4f}%  |  {r.get('annualized_pct', 0):+.1f}% годовых"
+        )
+    lines.append(f"\n📊 Источник: coinglass.com  ·  {config.PROMO_TERMINAL_NAME}")
+    caption = "\n".join(lines)[:1024]
+    try:
+        await _bot_instance.send_photo(
+            chat_id=config.TELEGRAM_CHANNEL_ID,
+            photo=image,
+            caption=caption,
+            reply_markup=_promo_keyboard(),
+        )
+    except Exception as e:
+        logger.error(f"Failed to auto-publish CoinGlass funding: {e}")
+
+
 async def _auto_publish_promo():
     if _bot_instance is None:
         return
@@ -221,6 +251,15 @@ def start_scheduler():
         id="auto_funding",
         replace_existing=True,
     )
+    _scheduler.add_job(
+        _auto_publish_coinglass_funding,
+        trigger=IntervalTrigger(
+            minutes=config.COINGLASS_FUNDING_INTERVAL_MINUTES,
+            start_date=now + timedelta(minutes=215),
+        ),
+        id="auto_coinglass_funding",
+        replace_existing=True,
+    )
     if config.PROMO_INTERVAL_MINUTES > 0:
         _scheduler.add_job(
             _auto_publish_promo,
@@ -236,6 +275,7 @@ def start_scheduler():
         f"Scheduler started: news every {config.NEWS_INTERVAL_MINUTES}m, "
         f"security every {config.SECURITY_INTERVAL_MINUTES}m, "
         f"funding every {config.FUNDING_INTERVAL_MINUTES}m, "
+        f"coinglass_funding every {config.COINGLASS_FUNDING_INTERVAL_MINUTES}m, "
         f"facts every {config.FACT_INTERVAL_MINUTES}m, "
         f"promo every {config.PROMO_INTERVAL_MINUTES}m"
     )

@@ -20,6 +20,7 @@ for _x in _admin_ids.split(","):
 COINGECKO_API_KEY: str = os.getenv("COINGECKO_API_KEY", "")
 NEWS_API_KEY: str = os.getenv("NEWS_API_KEY", "")
 CRYPTOPANIC_API_KEY: str = os.getenv("CRYPTOPANIC_API_KEY", "")
+COINGLASS_API_KEY: str = os.getenv("COINGLASS_API_KEY", "")
 
 PROMO_TERMINAL_NAME: str = os.getenv("PROMO_TERMINAL_NAME", "Trading Terminal")
 PROMO_LINK: str = os.getenv("PROMO_LINK", "https://example.com")
@@ -47,12 +48,14 @@ PRICE_INTERVAL_MINUTES: int = int(os.getenv("PRICE_INTERVAL_MINUTES", "10080"))
 FACT_INTERVAL_MINUTES: int = int(os.getenv("FACT_INTERVAL_MINUTES", "360"))
 SECURITY_INTERVAL_MINUTES: int = int(os.getenv("SECURITY_INTERVAL_MINUTES", "360"))
 FUNDING_INTERVAL_MINUTES: int = int(os.getenv("FUNDING_INTERVAL_MINUTES", "480"))
+COINGLASS_FUNDING_INTERVAL_MINUTES: int = int(os.getenv("COINGLASS_FUNDING_INTERVAL_MINUTES", "480"))
 TOP_COINS_COUNT: int = int(os.getenv("TOP_COINS_COUNT", "10"))
 
 COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3"
 COINGECKO_PRO_BASE_URL = "https://pro-api.coingecko.com/api/v3"
 NEWS_API_BASE_URL = "https://newsapi.org/v2"
 CRYPTOPANIC_BASE_URL = "https://cryptopanic.com/api/v1"
+COINGLASS_BASE_URL = "https://open-api.coinglass.com/public/v2"
 
 RSS_FEEDS = [
     "https://cointelegraph.com/rss",

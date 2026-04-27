@@ -1,11 +1,14 @@
 """
-Fetches perpetual futures funding rates from Binance.
-No API key required — public endpoint.
+Fetches perpetual futures funding rates from Binance and CoinGlass.
+No API key required for Binance — public endpoint.
+CoinGlass requires COINGLASS_API_KEY (free tier available at coinglass.com).
 """
 
 import logging
 import httpx
 from datetime import datetime, timezone
+
+import config
 
 logger = logging.getLogger(__name__)
 
@@ -74,3 +77,56 @@ def funding_sentiment(rate_pct: float) -> str:
         return "🟢"
     else:
         return "🔵"
+
+
+async def fetch_top_funding_coinglass(top_n: int = 5) -> list[dict]:
+    """Returns top N perpetual funding rates by absolute value from CoinGlass.
+
+    Each entry contains:
+        symbol, exchange, rate_pct, annualized_pct
+    Requires COINGLASS_API_KEY set in config / environment.
+    Falls back to an empty list if the key is missing or the request fails.
+    """
+    api_key = config.COINGLASS_API_KEY
+    if not api_key:
+        logger.warning("COINGLASS_API_KEY not set — skipping CoinGlass funding fetch")
+        return []
+
+    url = f"{config.COINGLASS_BASE_URL}/funding"
+    headers = {"coinglassSecret": api_key}
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get(url, headers=headers)
+            resp.raise_for_status()
+            payload = resp.json()
+    except Exception as e:
+        logger.error(f"Failed to fetch CoinGlass funding rates: {e}")
+        return []
+
+    if payload.get("code") != "0" or not isinstance(payload.get("data"), list):
+        logger.error(f"Unexpected CoinGlass response: {payload.get('msg', 'unknown error')}")
+        return []
+
+    entries: list[dict] = []
+    for item in payload["data"]:
+        symbol = item.get("symbol", "")
+        for margin_list in (item.get("uMarginList") or [], item.get("cMarginList") or []):
+            for ex in margin_list:
+                try:
+                    rate = float(ex.get("rate", 0) or 0)
+                except (TypeError, ValueError):
+                    continue
+                exchange = ex.get("exchangeName", "")
+                rate_pct = rate * 100
+                annualized_pct = rate * 3 * 365 * 100
+                entries.append({
+                    "symbol": symbol,
+                    "exchange": exchange,
+                    "rate": rate,
+                    "rate_pct": rate_pct,
+                    "annualized_pct": annualized_pct,
+                })
+
+    entries.sort(key=lambda x: abs(x["rate"]), reverse=True)
+    return entries[:top_n]

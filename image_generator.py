@@ -779,6 +779,83 @@ def generate_funding_image(rates: list[dict]) -> io.BytesIO:
     return _to_bytes(img)
 
 
+def generate_coinglass_funding_image(rates: list[dict]) -> io.BytesIO:
+    """Generates a dark-themed table for the top-5 funding rates from CoinGlass."""
+    HEADER_H = 82
+    FOOTER_H = 40
+    COL_H_ROW = 30
+    ROW_H = 52
+    n = len(rates)
+    img_h = HEADER_H + COL_H_ROW + n * ROW_H + FOOTER_H + 10
+
+    img = Image.new("RGB", (IMG_W, img_h), C_BG)
+    draw = ImageDraw.Draw(img)
+
+    ts = datetime.now(timezone.utc).strftime("%d %b %Y  %H:%M UTC")
+    _draw_header(draw, "ТОП-5 СТАВОК ФАНДИНГА  ·  COINGLASS", ts, HEADER_H)
+
+    # Legend bar
+    legend_y = HEADER_H + 4
+    legend_items = [
+        ("🔴 >0.1%", (255, 69, 58)), ("🟠 >0.03%", (255, 149, 0)),
+        ("🟡 >0%", (255, 214, 10)), ("🟢 <0%", (52, 199, 89)),
+        ("🔵 <-0.03%", (100, 180, 255)),
+    ]
+    lx = PAD
+    for label, color in legend_items:
+        draw.text((lx, legend_y), label, fill=color, font=_font(12))
+        lx += _text_w(draw, label, _font(12)) + 18
+
+    # Column headers
+    cy = HEADER_H + COL_H_ROW + 4
+    col_labels = [
+        ("Монета",    PAD),
+        ("Биржа",     PAD + 120),
+        ("8ч ставка", PAD + 320),
+        ("Годовых",   PAD + 490),
+    ]
+    for label, x in col_labels:
+        draw.text((x, cy - 22), label, fill=C_MUTED, font=_font(13))
+    draw.line([PAD, cy - 4, IMG_W - PAD, cy - 4], fill=C_BORDER, width=1)
+
+    for i, row in enumerate(rates):
+        ry = cy + i * ROW_H
+        bg = C_CARD if i % 2 == 0 else C_CARD2
+        draw.rectangle([0, ry - 2, IMG_W, ry + ROW_H - 4], fill=bg)
+
+        rate_pct = row.get("rate_pct", 0)
+        ann_pct = row.get("annualized_pct", 0)
+        symbol = row.get("symbol", "")
+        exchange = row.get("exchange", "")
+
+        if rate_pct > 0.1:
+            rate_color = C_RED
+        elif rate_pct > 0.03:
+            rate_color = (255, 149, 0)
+        elif rate_pct > 0:
+            rate_color = C_GOLD
+        elif rate_pct > -0.03:
+            rate_color = C_GREEN
+        else:
+            rate_color = C_ACCENT
+
+        prefix = "+" if rate_pct >= 0 else ""
+        ann_prefix = "+" if ann_pct >= 0 else ""
+
+        mid = ry + (ROW_H - 4) // 2 - 10
+
+        # rank badge
+        rank_label = f"#{i + 1}"
+        draw.text((PAD, mid + 3), rank_label, fill=C_MUTED, font=_font(14))
+        draw.text((PAD + 32, mid + 3), symbol, fill=C_TEXT, font=_font(18, bold=True))
+        draw.text((PAD + 120, mid + 3), exchange, fill=C_MUTED, font=_font(15))
+        draw.text((PAD + 320, mid + 3), f"{prefix}{rate_pct:.4f}%", fill=rate_color, font=_font(17, bold=True))
+        draw.text((PAD + 490, mid + 3), f"{ann_prefix}{ann_pct:.1f}%", fill=rate_color, font=_font(15))
+
+    _draw_footer(draw, img_h, source="CoinGlass")
+    return _to_bytes(img)
+
+
 def generate_promo_card(slogan: str | None = None) -> io.BytesIO:
     """Generates a branded promo card when no screenshots are available."""
     img_h = 480
