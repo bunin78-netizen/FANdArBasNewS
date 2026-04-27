@@ -22,23 +22,6 @@ def set_bot(bot):
     _bot_instance = bot
 
 
-def _promo_text() -> str:
-    return (
-        f"💼 *{config.PROMO_TERMINAL_NAME}*\n\n"
-        f"_{config.PROMO_SLOGAN}_\n\n"
-        f"🚀 Торгуй умнее — используй лучший инструмент!\n"
-        f"👉 [Попробовать бесплатно]({config.PROMO_LINK})"
-    )
-
-
-def _promo_keyboard():
-    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton(f"🚀 Открыть {config.PROMO_TERMINAL_NAME}", url=config.PROMO_LINK)],
-        [InlineKeyboardButton("🤖 Запустить бота", url=config.BOT_LINK)],
-    ])
-
-
 async def _auto_publish_news():
     if _bot_instance is None:
         return
@@ -59,7 +42,6 @@ async def _auto_publish_news():
                 chat_id=config.TELEGRAM_CHANNEL_ID,
                 photo=image_url,
                 caption=caption,
-                reply_markup=_promo_keyboard(),
             )
             sent = True
         except Exception as e:
@@ -71,7 +53,6 @@ async def _auto_publish_news():
                 chat_id=config.TELEGRAM_CHANNEL_ID,
                 photo=card,
                 caption=caption,
-                reply_markup=_promo_keyboard(),
             )
         except Exception as e:
             logger.error(f"Failed to auto-publish news card: {e}")
@@ -99,7 +80,6 @@ async def _auto_publish_security():
                 chat_id=config.TELEGRAM_CHANNEL_ID,
                 photo=image_url,
                 caption=caption,
-                reply_markup=_promo_keyboard(),
             )
             sent = True
         except Exception as e:
@@ -111,7 +91,6 @@ async def _auto_publish_security():
                 chat_id=config.TELEGRAM_CHANNEL_ID,
                 photo=card,
                 caption=caption,
-                reply_markup=_promo_keyboard(),
             )
         except Exception as e:
             logger.error(f"Failed to auto-publish security card: {e}")
@@ -131,7 +110,6 @@ async def _auto_publish_fact():
             chat_id=config.TELEGRAM_CHANNEL_ID,
             photo=image,
             caption=caption,
-            reply_markup=_promo_keyboard(),
         )
     except Exception as e:
         logger.error(f"Failed to auto-publish fact: {e}")
@@ -158,28 +136,9 @@ async def _auto_publish_funding():
             chat_id=config.TELEGRAM_CHANNEL_ID,
             photo=image,
             caption=caption,
-            reply_markup=_promo_keyboard(),
         )
     except Exception as e:
         logger.error(f"Failed to auto-publish funding: {e}")
-
-
-async def _auto_publish_promo():
-    if _bot_instance is None:
-        return
-    logger.info("Auto-publishing promo message...")
-    slogan = config.next_slogan()
-    image = imggen.get_promo_image(slogan=slogan) or imggen.generate_promo_card(slogan=slogan)
-    caption = f"💼 {config.PROMO_TERMINAL_NAME}\n{slogan}\n\n👉 {config.PROMO_LINK}"
-    try:
-        await _bot_instance.send_photo(
-            chat_id=config.TELEGRAM_CHANNEL_ID,
-            photo=image,
-            caption=caption,
-            reply_markup=_promo_keyboard(),
-        )
-    except Exception as e:
-        logger.error(f"Failed to auto-publish promo: {e}")
 
 
 def start_scheduler():
@@ -221,23 +180,12 @@ def start_scheduler():
         id="auto_funding",
         replace_existing=True,
     )
-    if config.PROMO_INTERVAL_MINUTES > 0:
-        _scheduler.add_job(
-            _auto_publish_promo,
-            trigger=IntervalTrigger(
-                minutes=config.PROMO_INTERVAL_MINUTES,
-                start_date=now + timedelta(minutes=245),
-            ),
-            id="auto_promo",
-            replace_existing=True,
-        )
     _scheduler.start()
     logger.info(
         f"Scheduler started: news every {config.NEWS_INTERVAL_MINUTES}m, "
         f"security every {config.SECURITY_INTERVAL_MINUTES}m, "
         f"funding every {config.FUNDING_INTERVAL_MINUTES}m, "
-        f"facts every {config.FACT_INTERVAL_MINUTES}m, "
-        f"promo every {config.PROMO_INTERVAL_MINUTES}m"
+        f"facts every {config.FACT_INTERVAL_MINUTES}m"
     )
 
 

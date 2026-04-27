@@ -35,28 +35,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def _promo_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton(
-            f"🚀 Открыть {config.PROMO_TERMINAL_NAME}",
-            url=config.PROMO_LINK,
-        )],
-        [InlineKeyboardButton(
-            "🤖 Запустить бота",
-            url=config.BOT_LINK,
-        )],
-    ])
-
-
-def _promo_text() -> str:
-    return (
-        f"💼 *{config.PROMO_TERMINAL_NAME}*\n\n"
-        f"_{config.PROMO_SLOGAN}_\n\n"
-        f"🚀 Торгуй умнее — используй лучший инструмент!\n"
-        f"👉 [Попробовать бесплатно]({config.PROMO_LINK})"
-    )
-
-
 def admin_only(func):
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = update.effective_user.id if update.effective_user else None
@@ -78,13 +56,11 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"/trending — Трендовые монеты\n"
         f"/news — Последние новости\n"
         f"/coin <id> — Детали по монете\n"
-        f"/promo — Наш торговый терминал\n"
         f"/help — Справка\n"
     )
     await update.message.reply_text(
         text,
         parse_mode="Markdown",
-        reply_markup=_promo_keyboard(),
     )
 
 
@@ -96,12 +72,10 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "*/trending* — Трендовые монеты на CoinGecko\n"
         "*/news* — Последние крипто-новости\n"
         "*/coin <id>* — Детальная информация по монете\n"
-        "  Примеры: `/coin bitcoin`, `/coin ethereum`, `/coin solana`\n"
-        "*/promo* — Информация о нашем торговом терминале\n\n"
+        "  Примеры: `/coin bitcoin`, `/coin ethereum`, `/coin solana`\n\n"
         "🤖 *Для администраторов:*\n"
         "*/publish\\_prices* — Опубликовать цены в канал\n"
         "*/publish\\_news* — Опубликовать новости в канал\n"
-        "*/publish\\_promo* — Опубликовать рекламу в канал\n"
     )
     await update.message.reply_text(text, parse_mode="Markdown")
 
@@ -121,12 +95,11 @@ async def cmd_security(update: Update, context: ContextTypes.DEFAULT_TYPE):
         source = article.get("source", "")
         url = article.get("url", "")
         caption = f"🔐 {title}\n\n📌 {source}\n{url}"[:1024]
-        keyboard = _promo_keyboard() if i == len(articles) - 1 else None
         sent = False
         if image_url:
             try:
                 await update.message.reply_photo(
-                    photo=image_url, caption=caption, reply_markup=keyboard
+                    photo=image_url, caption=caption
                 )
                 sent = True
             except Exception:
@@ -134,7 +107,7 @@ async def cmd_security(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not sent:
             card = imggen.generate_security_image(article)
             await update.message.reply_photo(
-                photo=card, caption=caption, reply_markup=keyboard
+                photo=card, caption=caption
             )
         certik_fetcher.mark_published(url)
 
@@ -146,18 +119,6 @@ async def cmd_fact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=image,
         caption=caption,
-        reply_markup=_promo_keyboard(),
-    )
-
-
-async def cmd_promo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    slogan = config.next_slogan()
-    image = imggen.get_promo_image(slogan=slogan) or imggen.generate_promo_card(slogan=slogan)
-    caption = f"💼 {config.PROMO_TERMINAL_NAME}\n{slogan}\n\n👉 {config.PROMO_LINK}"
-    await update.message.reply_photo(
-        photo=image,
-        caption=caption,
-        reply_markup=_promo_keyboard(),
     )
 
 
@@ -170,7 +131,6 @@ async def cmd_prices(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=image,
         caption=caption,
-        reply_markup=_promo_keyboard(),
     )
 
 
@@ -189,7 +149,6 @@ async def cmd_market(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=image,
         caption=caption,
-        reply_markup=_promo_keyboard(),
     )
 
 
@@ -202,7 +161,6 @@ async def cmd_trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=image,
         caption=caption,
-        reply_markup=_promo_keyboard(),
     )
 
 
@@ -259,7 +217,6 @@ async def cmd_funding(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=image,
         caption=caption,
-        reply_markup=_promo_keyboard(),
     )
 
 
@@ -273,7 +230,6 @@ async def cmd_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for i, article in enumerate(articles):
         text = news_fetcher.format_news_message(article)
         image_url = article.get("image_url", "")
-        keyboard = _promo_keyboard() if i == len(articles) - 1 else None
         title = article.get("title", "")[:200]
         source = article.get("source", "")
         url = article.get("url", "")
@@ -284,7 +240,6 @@ async def cmd_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_photo(
                     photo=image_url,
                     caption=caption,
-                    reply_markup=keyboard,
                 )
                 sent = True
             except Exception as e:
@@ -295,7 +250,6 @@ async def cmd_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_photo(
                     photo=card,
                     caption=caption,
-                    reply_markup=keyboard,
                 )
             except Exception as e:
                 logger.error(f"Failed to send news card: {e}")
@@ -347,7 +301,6 @@ async def cmd_coin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=image,
         caption=caption,
-        reply_markup=_promo_keyboard(),
     )
 
 
@@ -362,7 +315,6 @@ async def cmd_publish_prices(update: Update, context: ContextTypes.DEFAULT_TYPE)
             chat_id=config.TELEGRAM_CHANNEL_ID,
             photo=image,
             caption=caption,
-            reply_markup=_promo_keyboard(),
         )
         await msg.edit_text("✅ Цены успешно опубликованы в канал.")
     except Exception as e:
@@ -380,7 +332,6 @@ async def cmd_publish_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for i, article in enumerate(articles):
         text = news_fetcher.format_news_message(article)
         image_url = article.get("image_url", "")
-        keyboard = _promo_keyboard() if i == len(articles) - 1 else None
         title = article.get("title", "")[:200]
         source = article.get("source", "")
         url = article.get("url", "")
@@ -392,7 +343,6 @@ async def cmd_publish_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     chat_id=config.TELEGRAM_CHANNEL_ID,
                     photo=image_url,
                     caption=caption,
-                    reply_markup=keyboard,
                 )
                 sent = True
             except Exception as e:
@@ -404,7 +354,6 @@ async def cmd_publish_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     chat_id=config.TELEGRAM_CHANNEL_ID,
                     photo=card,
                     caption=caption,
-                    reply_markup=keyboard,
                 )
             except Exception as e:
                 logger.error(f"Failed to publish news card: {e}")
@@ -412,24 +361,6 @@ async def cmd_publish_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
         news_fetcher.mark_article_published(article)
         count += 1
     await msg.edit_text(f"✅ Опубликовано {count} статей в канал.")
-
-
-@admin_only
-async def cmd_publish_promo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    msg = await update.message.reply_text("⏳ Публикую рекламу в канал...")
-    slogan = config.next_slogan()
-    image = imggen.get_promo_image(slogan=slogan) or imggen.generate_promo_card(slogan=slogan)
-    caption = f"💼 {config.PROMO_TERMINAL_NAME}\n{slogan}\n\n👉 {config.PROMO_LINK}"
-    try:
-        await context.bot.send_photo(
-            chat_id=config.TELEGRAM_CHANNEL_ID,
-            photo=image,
-            caption=caption,
-            reply_markup=_promo_keyboard(),
-        )
-        await msg.edit_text("✅ Реклама опубликована в канал.")
-    except Exception as e:
-        await msg.edit_text(f"❌ Ошибка публикации: {e}")
 
 
 async def handle_unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -451,10 +382,8 @@ async def post_init(application: Application):
         BotCommand("exchanges", "Биржи с бонусом при регистрации"),
         BotCommand("funding", "Ставки фандинга перп. фьючерсов"),
         BotCommand("fact", "Интересный факт о криптовалютах"),
-        BotCommand("promo", "Наш торговый терминал"),
         BotCommand("publish_prices", "Опубликовать цены в канал [admin]"),
         BotCommand("publish_news", "Опубликовать новости в канал [admin]"),
-        BotCommand("publish_promo", "Опубликовать рекламу в канал [admin]"),
     ]
     await application.bot.set_my_commands(commands)
     sched.set_bot(application.bot)
@@ -482,7 +411,6 @@ def main():
 
     application.add_handler(CommandHandler("start", cmd_start))
     application.add_handler(CommandHandler("help", cmd_help))
-    application.add_handler(CommandHandler("promo", cmd_promo))
     application.add_handler(CommandHandler("prices", cmd_prices))
     application.add_handler(CommandHandler("market", cmd_market))
     application.add_handler(CommandHandler("trending", cmd_trending))
@@ -494,7 +422,6 @@ def main():
     application.add_handler(CommandHandler("coin", cmd_coin))
     application.add_handler(CommandHandler("publish_prices", cmd_publish_prices))
     application.add_handler(CommandHandler("publish_news", cmd_publish_news))
-    application.add_handler(CommandHandler("publish_promo", cmd_publish_promo))
     application.add_handler(MessageHandler(filters.COMMAND, handle_unknown))
 
     logger.info("Starting Telegram bot polling...")
