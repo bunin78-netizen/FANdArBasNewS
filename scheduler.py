@@ -9,6 +9,7 @@ import news_fetcher
 import crypto_facts
 import certik_fetcher
 import funding_fetcher
+import arbitrage
 import image_generator as imggen
 
 logger = logging.getLogger(__name__)
@@ -129,7 +130,7 @@ async def _auto_publish_funding():
         f"📈 Ставки фандинга  ·  Перп. фьючерсы\n"
         f"Лидер: {top.get('symbol','')} {prefix}{top.get('rate_pct',0):.4f}%  ·  "
         f"Годовых: {top.get('annualized_pct',0):+.1f}%\n"
-        f"Источник: Binance Futures  ·  {config.PROMO_TERMINAL_NAME}"
+        f"Источник: Binance · OKX  ·  {config.PROMO_TERMINAL_NAME}"
     )[:1024]
     try:
         await _bot_instance.send_photo(
@@ -139,6 +140,33 @@ async def _auto_publish_funding():
         )
     except Exception as e:
         logger.error(f"Failed to auto-publish funding: {e}")
+
+
+async def _auto_publish_arbitrage_digest():
+    """Daily arbitrage digest: funding rates + exchange spreads."""
+    if _bot_instance is None:
+        return
+    logger.info("Auto-publishing arbitrage digest...")
+    rates = await funding_fetcher.fetch_funding_rates()
+    prices = await arbitrage.fetch_exchange_prices()
+    spreads = arbitrage.build_spread_summary(prices)
+    if not rates and not spreads:
+        logger.warning("No arbitrage data available, skipping digest.")
+        return
+    image = imggen.generate_arbitrage_image(rates, spreads)
+    caption = (
+        f"📊 Ежедневный арбитражный дайджест\n"
+        f"Фандинг Binance+OKX · Спреды Binance/Bybit/OKX\n"
+        f"{config.PROMO_TERMINAL_NAME}"
+    )[:1024]
+    try:
+        await _bot_instance.send_photo(
+            chat_id=config.TELEGRAM_CHANNEL_ID,
+            photo=image,
+            caption=caption,
+        )
+    except Exception as e:
+        logger.error(f"Failed to auto-publish arbitrage digest: {e}")
 
 
 async def _auto_publish_promo():
@@ -197,6 +225,15 @@ def start_scheduler():
         id="auto_funding",
         replace_existing=True,
     )
+    _scheduler.add_job(
+        _auto_publish_arbitrage_digest,
+        trigger=IntervalTrigger(
+            minutes=300,
+            start_date=now + timedelta(minutes=245),
+        ),
+        id="auto_arbitrage",
+        replace_existing=True,
+    )
     if config.PROMO_INTERVAL_MINUTES > 0:
         _scheduler.add_job(
             _auto_publish_promo,
@@ -213,6 +250,7 @@ def start_scheduler():
         f"security every {config.SECURITY_INTERVAL_MINUTES}m, "
         f"funding every {config.FUNDING_INTERVAL_MINUTES}m, "
         f"facts every {config.FACT_INTERVAL_MINUTES}m, "
+        f"arbitrage every 300m, "
         f"promo every {config.PROMO_INTERVAL_MINUTES}m"
     )
 

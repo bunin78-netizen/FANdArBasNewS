@@ -700,19 +700,19 @@ def generate_exchanges_image(exchanges: list[dict]) -> io.BytesIO:
 
 
 def generate_funding_image(rates: list[dict]) -> io.BytesIO:
-    """Generates a dark-themed funding rate table for top perpetuals."""
+    """Generates a dark-themed funding rate table for top perpetuals (Binance + OKX)."""
     HEADER_H = 82
     FOOTER_H = 40
     COL_H_ROW = 30
     ROW_H = 52
-    n = len(rates)
+    n = min(len(rates), 20)
     img_h = HEADER_H + COL_H_ROW + n * ROW_H + FOOTER_H + 10
 
     img = Image.new("RGB", (IMG_W, img_h), C_BG)
     draw = ImageDraw.Draw(img)
 
     ts = datetime.now(timezone.utc).strftime("%d %b %Y  %H:%M UTC")
-    _draw_header(draw, "FUNDING RATES  ·  ПЕРП. ФЬЮЧЕРСЫ", ts, HEADER_H)
+    _draw_header(draw, "FUNDING RATES  ·  БИРЖЕВОЙ ФАНДИНГ", ts, HEADER_H)
 
     # Legend bar
     legend_y = HEADER_H + 4
@@ -729,17 +729,17 @@ def generate_funding_image(rates: list[dict]) -> io.BytesIO:
     # Column headers
     cy = HEADER_H + COL_H_ROW + 4
     col_labels = [
-        ("Монета",   PAD),
-        ("Цена",     PAD + 120),
-        ("8ч ставка", PAD + 280),
-        ("Годовых",  PAD + 440),
+        ("Биржа",   PAD),
+        ("Монета",  PAD + 70),
+        ("8ч ставка", PAD + 240),
+        ("Годовых",  PAD + 420),
         ("Сл. выплата", PAD + 580),
     ]
     for label, x in col_labels:
         draw.text((x, cy - 22), label, fill=C_MUTED, font=_font(13))
     draw.line([PAD, cy - 4, IMG_W - PAD, cy - 4], fill=C_BORDER, width=1)
 
-    for i, row in enumerate(rates):
+    for i, row in enumerate(rates[:n]):
         ry = cy + i * ROW_H
         bg = C_CARD if i % 2 == 0 else C_CARD2
         draw.rectangle([0, ry - 2, IMG_W, ry + ROW_H - 4], fill=bg)
@@ -747,6 +747,7 @@ def generate_funding_image(rates: list[dict]) -> io.BytesIO:
         rate_pct = row.get("rate_pct", 0)
         ann_pct = row.get("annualized_pct", 0)
         symbol = row.get("symbol", "")
+        exchange = row.get("exchange", "")
         mark_price = row.get("mark_price", 0)
         next_ft = row.get("next_funding_time")
 
@@ -766,16 +767,93 @@ def generate_funding_image(rates: list[dict]) -> io.BytesIO:
 
         mid = ry + (ROW_H - 4) // 2 - 10
 
-        draw.text((PAD, mid + 3), symbol, fill=C_TEXT, font=_font(18, bold=True))
-        draw.text((PAD + 120, mid + 3), _fmt_price(mark_price), fill=C_TEXT, font=_font(15))
-        draw.text((PAD + 280, mid + 3), f"{prefix}{rate_pct:.4f}%", fill=rate_color, font=_font(17, bold=True))
-        draw.text((PAD + 440, mid + 3), f"{ann_prefix}{ann_pct:.1f}%", fill=rate_color, font=_font(15))
+        draw.text((PAD, mid + 3), exchange, fill=C_MUTED, font=_font(14))
+        draw.text((PAD + 70, mid + 3), symbol, fill=C_TEXT, font=_font(18, bold=True))
+        draw.text((PAD + 240, mid + 3), f"{prefix}{rate_pct:.4f}%", fill=rate_color, font=_font(17, bold=True))
+        draw.text((PAD + 420, mid + 3), f"{ann_prefix}{ann_pct:.1f}%", fill=rate_color, font=_font(15))
 
         if next_ft:
             next_str = next_ft.strftime("%H:%M UTC")
             draw.text((PAD + 580, mid + 3), next_str, fill=C_MUTED, font=_font(14))
 
-    _draw_footer(draw, img_h, source="Binance Futures")
+    _draw_footer(draw, img_h, source="Binance · OKX")
+    return _to_bytes(img)
+
+
+def generate_arbitrage_image(rates: list[dict], spreads: list[dict]) -> io.BytesIO:
+    """Generates an arbitrage digest image with funding + spread data."""
+    HEADER_H = 82
+    FOOTER_H = 40
+    # Two sections: top 5 positive funding, top 5 negative funding, top 3 spreads
+    n = min(len(rates), 10)
+    ROW_H = 42
+    SPREAD_H = 32
+    spread_count = min(len(spreads), 3)
+    img_h = HEADER_H + 40 + n * ROW_H + 20 + spread_count * SPREAD_H + 50 + FOOTER_H
+
+    img = Image.new("RGB", (IMG_W, img_h), C_BG)
+    draw = ImageDraw.Draw(img)
+
+    ts = datetime.now(timezone.utc).strftime("%d %b %Y  %H:%M UTC")
+    _draw_header(draw, "📊 АРБИТРАЖНЫЙ ДАЙДЖЕСТ", ts, HEADER_H)
+
+    cy = HEADER_H + 10
+
+    # ── Funding rates section ──
+    draw.text((PAD, cy), "⚡ Ставки фандинга (Binance + OKX)", fill=C_GOLD, font=_font(18, bold=True))
+    cy += 28
+    for i, row in enumerate(rates[:n]):
+        ry = cy + i * ROW_H
+        bg = C_CARD if i % 2 == 0 else C_CARD2
+        draw.rectangle([0, ry, IMG_W, ry + ROW_H], fill=bg)
+
+        rate_pct = row.get("rate_pct", 0)
+        ann_pct = row.get("annualized_pct", 0)
+        symbol = row.get("symbol", "")
+        exchange = row.get("exchange", "")
+
+        if rate_pct > 0.1:
+            rate_color = C_RED
+        elif rate_pct > 0.03:
+            rate_color = (255, 149, 0)
+        elif rate_pct > 0:
+            rate_color = C_GOLD
+        elif rate_pct > -0.03:
+            rate_color = C_GREEN
+        else:
+            rate_color = C_ACCENT
+
+        prefix = "+" if rate_pct >= 0 else ""
+        ann_prefix = "+" if ann_pct >= 0 else ""
+        mid = ry + ROW_H // 2 - 8
+
+        draw.text((PAD, mid), f"{exchange}", fill=C_MUTED, font=_font(13))
+        draw.text((PAD + 70, mid), symbol, fill=C_TEXT, font=_font(16, bold=True))
+        draw.text((PAD + 180, mid), f"{prefix}{rate_pct:.4f}%", fill=rate_color, font=_font(15, bold=True))
+        draw.text((PAD + 360, mid), f"год. {ann_prefix}{ann_pct:.1f}%", fill=rate_color, font=_font(14))
+
+    cy += n * ROW_H + 14
+
+    # ── Exchange spreads section ──
+    if spreads:
+        draw.text((PAD, cy), "💱 Спреды между биржами (spot)", fill=C_GOLD, font=_font(18, bold=True))
+        cy += 28
+        for i, s in enumerate(spreads[:spread_count]):
+            sy = cy + i * SPREAD_H
+            draw.rectangle([0, sy, IMG_W, sy + SPREAD_H], fill=C_CARD2)
+            mid = sy + SPREAD_H // 2 - 8
+            color = C_GREEN if s["spread_pct"] < 0.05 else C_GOLD if s["spread_pct"] < 0.15 else C_RED
+            draw.text((PAD, mid), s["symbol"], fill=C_TEXT, font=_font(16, bold=True))
+            draw.text((PAD + 80, mid),
+                      f"{s['best_exchange']} ${s['best_price']:,.2f}",
+                      fill=C_GREEN, font=_font(13))
+            draw.text((PAD + 320, mid),
+                      f"{s['worst_exchange']} ${s['worst_price']:,.2f}",
+                      fill=C_RED, font=_font(13))
+            draw.text((PAD + 560, mid), f"спред {s['spread_pct']:.3f}%",
+                      fill=color, font=_font(14, bold=True))
+
+    _draw_footer(draw, img_h, source="CoinGecko · Binance · OKX · Bybit")
     return _to_bytes(img)
 
 

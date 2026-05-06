@@ -24,6 +24,7 @@ import news_fetcher
 import crypto_facts
 import certik_fetcher
 import funding_fetcher
+import arbitrage
 import exchanges as exch_data
 import image_generator as imggen
 import scheduler as sched
@@ -54,6 +55,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"/prices — Топ криптовалют по цене\n"
         f"/market — Глобальный обзор рынка\n"
         f"/trending — Трендовые монеты\n"
+        f"/arbitrage — Арбитражный дайджест\n"
         f"/news — Последние новости\n"
         f"/coin <id> — Детали по монете\n"
         f"/promo — Наш торговый терминал\n"
@@ -71,6 +73,7 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "*/prices* — Топ монет с ценами и изменением за 24ч\n"
         "*/market* — Общая капитализация, объём, доминирование BTC/ETH\n"
         "*/trending* — Трендовые монеты на CoinGecko\n"
+        "*/arbitrage* — Фандинг + спреды бирж\n"
         "*/news* — Последние крипто-новости\n"
         "*/coin <id>* — Детальная информация по монете\n"
         "  Примеры: `/coin bitcoin`, `/coin ethereum`, `/coin solana`\n"
@@ -226,6 +229,22 @@ async def cmd_funding(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Годовых: {top.get('annualized_pct',0):+.1f}%\n"
         f"Источник: Binance Futures  ·  {config.PROMO_TERMINAL_NAME}"
     )[:1024]
+    await msg.delete()
+    await update.message.reply_photo(
+        photo=image,
+        caption=caption,
+    )
+
+
+async def cmd_arbitrage(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Daily arbitrage digest — funding rates + exchange spreads."""
+    msg = await update.message.reply_text("⏳ Собираю арбитражные данные...")
+    rates = await funding_fetcher.fetch_funding_rates()
+    prices = await arbitrage.fetch_exchange_prices()
+    spreads = arbitrage.build_spread_summary(prices)
+    digest_text = arbitrage.build_arbitrage_digest(rates, spreads)
+    image = imggen.generate_arbitrage_image(rates, spreads)
+    caption = f"📊 Ежедневный арбитражный дайджест\nИсточники: CoinGecko · Binance · OKX · Bybit\n{config.PROMO_TERMINAL_NAME}"
     await msg.delete()
     await update.message.reply_photo(
         photo=image,
@@ -406,6 +425,7 @@ async def post_init(application: Application):
         BotCommand("prices", "Топ криптовалют по цене"),
         BotCommand("market", "Глобальный обзор рынка"),
         BotCommand("trending", "Трендовые монеты"),
+        BotCommand("arbitrage", "Арбитражный дайджест"),
         BotCommand("news", "Последние новости"),
         BotCommand("coin", "Детали по монете (пример: /coin bitcoin)"),
         BotCommand("security", "Новости безопасности CertiK & SlowMist"),
@@ -451,6 +471,7 @@ def main():
     application.add_handler(CommandHandler("security", cmd_security))
     application.add_handler(CommandHandler("exchanges", cmd_exchanges))
     application.add_handler(CommandHandler("funding", cmd_funding))
+    application.add_handler(CommandHandler("arbitrage", cmd_arbitrage))
     application.add_handler(CommandHandler("fact", cmd_fact))
     application.add_handler(CommandHandler("coin", cmd_coin))
     application.add_handler(CommandHandler("publish_prices", cmd_publish_prices))
