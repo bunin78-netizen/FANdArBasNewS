@@ -189,70 +189,95 @@ async def _auto_publish_promo():
 def start_scheduler():
     now = datetime.now(timezone.utc)
 
-    _scheduler.add_job(
-        _auto_publish_news,
-        trigger=IntervalTrigger(
-            minutes=config.NEWS_INTERVAL_MINUTES,
-            start_date=now + timedelta(minutes=5),
-        ),
-        id="auto_news",
-        replace_existing=True,
-    )
-    _scheduler.add_job(
-        _auto_publish_fact,
-        trigger=IntervalTrigger(
-            minutes=config.FACT_INTERVAL_MINUTES,
-            start_date=now + timedelta(minutes=65),
-        ),
-        id="auto_fact",
-        replace_existing=True,
-    )
-    _scheduler.add_job(
-        _auto_publish_security,
-        trigger=IntervalTrigger(
-            minutes=config.SECURITY_INTERVAL_MINUTES,
-            start_date=now + timedelta(minutes=125),
-        ),
-        id="auto_security",
-        replace_existing=True,
-    )
-    _scheduler.add_job(
-        _auto_publish_funding,
-        trigger=IntervalTrigger(
-            minutes=config.FUNDING_INTERVAL_MINUTES,
-            start_date=now + timedelta(minutes=185),
-        ),
-        id="auto_funding",
-        replace_existing=True,
-    )
-    _scheduler.add_job(
-        _auto_publish_arbitrage_digest,
-        trigger=IntervalTrigger(
-            minutes=300,
-            start_date=now + timedelta(minutes=245),
-        ),
-        id="auto_arbitrage",
-        replace_existing=True,
-    )
+    # 1. Arb digest — core arbitrage content, fires first
+    if config.ARBITRAGE_INTERVAL_MINUTES > 0:
+        _scheduler.add_job(
+            _auto_publish_arbitrage_digest,
+            trigger=IntervalTrigger(
+                minutes=config.ARBITRAGE_INTERVAL_MINUTES,
+                start_date=now + timedelta(minutes=5),
+            ),
+            id="auto_arbitrage",
+            replace_existing=True,
+        )
+
+    # 2. Funding rates — update mid-cycle
+    if config.FUNDING_INTERVAL_MINUTES > 0:
+        _scheduler.add_job(
+            _auto_publish_funding,
+            trigger=IntervalTrigger(
+                minutes=config.FUNDING_INTERVAL_MINUTES,
+                start_date=now + timedelta(minutes=90),
+            ),
+            id="auto_funding",
+            replace_existing=True,
+        )
+
+    # 3. News — once per cycle, wraps up
+    if config.NEWS_INTERVAL_MINUTES > 0:
+        _scheduler.add_job(
+            _auto_publish_news,
+            trigger=IntervalTrigger(
+                minutes=config.NEWS_INTERVAL_MINUTES,
+                start_date=now + timedelta(minutes=180),
+            ),
+            id="auto_news",
+            replace_existing=True,
+        )
+
+    # 4. Crypto facts (optional)
+    if config.FACT_INTERVAL_MINUTES > 0:
+        _scheduler.add_job(
+            _auto_publish_fact,
+            trigger=IntervalTrigger(
+                minutes=config.FACT_INTERVAL_MINUTES,
+                start_date=now + timedelta(minutes=90),
+            ),
+            id="auto_fact",
+            replace_existing=True,
+        )
+
+    # 5. Security news (optional)
+    if config.SECURITY_INTERVAL_MINUTES > 0:
+        _scheduler.add_job(
+            _auto_publish_security,
+            trigger=IntervalTrigger(
+                minutes=config.SECURITY_INTERVAL_MINUTES,
+                start_date=now + timedelta(minutes=90),
+            ),
+            id="auto_security",
+            replace_existing=True,
+        )
+
+    # 6. Promo (disabled by default)
     if config.PROMO_INTERVAL_MINUTES > 0:
         _scheduler.add_job(
             _auto_publish_promo,
             trigger=IntervalTrigger(
                 minutes=config.PROMO_INTERVAL_MINUTES,
-                start_date=now + timedelta(minutes=245),
+                start_date=now + timedelta(minutes=180),
             ),
             id="auto_promo",
             replace_existing=True,
         )
+
     _scheduler.start()
-    logger.info(
-        f"Scheduler started: news every {config.NEWS_INTERVAL_MINUTES}m, "
-        f"security every {config.SECURITY_INTERVAL_MINUTES}m, "
-        f"funding every {config.FUNDING_INTERVAL_MINUTES}m, "
-        f"facts every {config.FACT_INTERVAL_MINUTES}m, "
-        f"arbitrage every 300m, "
-        f"promo every {config.PROMO_INTERVAL_MINUTES}m"
-    )
+
+    active = []
+    if config.ARBITRAGE_INTERVAL_MINUTES > 0:
+        active.append(f"📊 arb {config.ARBITRAGE_INTERVAL_MINUTES}m")
+    if config.FUNDING_INTERVAL_MINUTES > 0:
+        active.append(f"📈 funding {config.FUNDING_INTERVAL_MINUTES}m")
+    if config.NEWS_INTERVAL_MINUTES > 0:
+        active.append(f"📰 news {config.NEWS_INTERVAL_MINUTES}m")
+    if config.FACT_INTERVAL_MINUTES > 0:
+        active.append(f"💡 fact {config.FACT_INTERVAL_MINUTES}m")
+    if config.SECURITY_INTERVAL_MINUTES > 0:
+        active.append(f"🔐 security {config.SECURITY_INTERVAL_MINUTES}m")
+    if config.PROMO_INTERVAL_MINUTES > 0:
+        active.append(f"🚀 promo {config.PROMO_INTERVAL_MINUTES}m")
+
+    logger.info(f"Scheduler started: {' · '.join(active) if active else 'none'}")
 
 
 def stop_scheduler():
