@@ -35,28 +35,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def _promo_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton(
-            f"🚀 Открыть {config.PROMO_TERMINAL_NAME}",
-            url=config.PROMO_LINK,
-        )],
-        [InlineKeyboardButton(
-            "🤖 Запустить бота",
-            url=config.BOT_LINK,
-        )],
-    ])
-
-
-def _promo_text() -> str:
-    return (
-        f"💼 *{config.PROMO_TERMINAL_NAME}*\n\n"
-        f"_{config.PROMO_SLOGAN}_\n\n"
-        f"🚀 Торгуй умнее — используй лучший инструмент!\n"
-        f"👉 [Попробовать бесплатно]({config.PROMO_LINK})"
-    )
-
-
 def admin_only(func):
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = update.effective_user.id if update.effective_user else None
@@ -84,7 +62,6 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         text,
         parse_mode="Markdown",
-        reply_markup=_promo_keyboard(),
     )
 
 
@@ -121,12 +98,11 @@ async def cmd_security(update: Update, context: ContextTypes.DEFAULT_TYPE):
         source = article.get("source", "")
         url = article.get("url", "")
         caption = f"🔐 {title}\n\n📌 {source}\n{url}"[:1024]
-        keyboard = _promo_keyboard() if i == len(articles) - 1 else None
         sent = False
         if image_url:
             try:
                 await update.message.reply_photo(
-                    photo=image_url, caption=caption, reply_markup=keyboard
+                    photo=image_url, caption=caption
                 )
                 sent = True
             except Exception:
@@ -134,7 +110,7 @@ async def cmd_security(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not sent:
             card = imggen.generate_security_image(article)
             await update.message.reply_photo(
-                photo=card, caption=caption, reply_markup=keyboard
+                photo=card, caption=caption
             )
         certik_fetcher.mark_published(url)
 
@@ -146,7 +122,6 @@ async def cmd_fact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=image,
         caption=caption,
-        reply_markup=_promo_keyboard(),
     )
 
 
@@ -157,7 +132,6 @@ async def cmd_promo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=image,
         caption=caption,
-        reply_markup=_promo_keyboard(),
     )
 
 
@@ -170,7 +144,6 @@ async def cmd_prices(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=image,
         caption=caption,
-        reply_markup=_promo_keyboard(),
     )
 
 
@@ -189,7 +162,6 @@ async def cmd_market(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=image,
         caption=caption,
-        reply_markup=_promo_keyboard(),
     )
 
 
@@ -202,7 +174,6 @@ async def cmd_trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=image,
         caption=caption,
-        reply_markup=_promo_keyboard(),
     )
 
 
@@ -259,7 +230,6 @@ async def cmd_funding(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=image,
         caption=caption,
-        reply_markup=_promo_keyboard(),
     )
 
 
@@ -273,7 +243,6 @@ async def cmd_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for i, article in enumerate(articles):
         text = news_fetcher.format_news_message(article)
         image_url = article.get("image_url", "")
-        keyboard = _promo_keyboard() if i == len(articles) - 1 else None
         title = article.get("title", "")[:200]
         source = article.get("source", "")
         url = article.get("url", "")
@@ -284,7 +253,6 @@ async def cmd_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_photo(
                     photo=image_url,
                     caption=caption,
-                    reply_markup=keyboard,
                 )
                 sent = True
             except Exception as e:
@@ -295,7 +263,6 @@ async def cmd_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_photo(
                     photo=card,
                     caption=caption,
-                    reply_markup=keyboard,
                 )
             except Exception as e:
                 logger.error(f"Failed to send news card: {e}")
@@ -347,7 +314,6 @@ async def cmd_coin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=image,
         caption=caption,
-        reply_markup=_promo_keyboard(),
     )
 
 
@@ -362,7 +328,6 @@ async def cmd_publish_prices(update: Update, context: ContextTypes.DEFAULT_TYPE)
             chat_id=config.TELEGRAM_CHANNEL_ID,
             photo=image,
             caption=caption,
-            reply_markup=_promo_keyboard(),
         )
         await msg.edit_text("✅ Цены успешно опубликованы в канал.")
     except Exception as e:
@@ -380,7 +345,6 @@ async def cmd_publish_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for i, article in enumerate(articles):
         text = news_fetcher.format_news_message(article)
         image_url = article.get("image_url", "")
-        keyboard = _promo_keyboard() if i == len(articles) - 1 else None
         title = article.get("title", "")[:200]
         source = article.get("source", "")
         url = article.get("url", "")
@@ -392,7 +356,6 @@ async def cmd_publish_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     chat_id=config.TELEGRAM_CHANNEL_ID,
                     photo=image_url,
                     caption=caption,
-                    reply_markup=keyboard,
                 )
                 sent = True
             except Exception as e:
@@ -404,7 +367,6 @@ async def cmd_publish_news(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     chat_id=config.TELEGRAM_CHANNEL_ID,
                     photo=card,
                     caption=caption,
-                    reply_markup=keyboard,
                 )
             except Exception as e:
                 logger.error(f"Failed to publish news card: {e}")
@@ -425,7 +387,6 @@ async def cmd_publish_promo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chat_id=config.TELEGRAM_CHANNEL_ID,
             photo=image,
             caption=caption,
-            reply_markup=_promo_keyboard(),
         )
         await msg.edit_text("✅ Реклама опубликована в канал.")
     except Exception as e:

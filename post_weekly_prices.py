@@ -7,14 +7,11 @@ import asyncio
 import config
 import crypto_data
 import image_generator as imggen
-from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Bot
 
 
 async def main():
     bot = Bot(token=config.TELEGRAM_BOT_TOKEN)
-    keyboard = InlineKeyboardMarkup([[
-        InlineKeyboardButton(f"🚀 {config.PROMO_TERMINAL_NAME}", url=config.PROMO_LINK)
-    ]])
     coins = await crypto_data.fetch_top_coins(config.TOP_COINS_COUNT)
     if not coins:
         print("ERROR: failed to fetch coin data")
@@ -29,7 +26,6 @@ async def main():
         chat_id=config.TELEGRAM_CHANNEL_ID,
         photo=image,
         caption=caption,
-        reply_markup=keyboard,
     )
     print(f"Posted top-{len(coins)} prices successfully.")
     await bot.close()

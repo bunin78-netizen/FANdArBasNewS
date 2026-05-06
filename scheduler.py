@@ -22,23 +22,6 @@ def set_bot(bot):
     _bot_instance = bot
 
 
-def _promo_text() -> str:
-    return (
-        f"💼 *{config.PROMO_TERMINAL_NAME}*\n\n"
-        f"_{config.PROMO_SLOGAN}_\n\n"
-        f"🚀 Торгуй умнее — используй лучший инструмент!\n"
-        f"👉 [Попробовать бесплатно]({config.PROMO_LINK})"
-    )
-
-
-def _promo_keyboard():
-    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton(f"🚀 Открыть {config.PROMO_TERMINAL_NAME}", url=config.PROMO_LINK)],
-        [InlineKeyboardButton("🤖 Запустить бота", url=config.BOT_LINK)],
-    ])
-
-
 async def _auto_publish_news():
     if _bot_instance is None:
         return
@@ -59,7 +42,6 @@ async def _auto_publish_news():
                 chat_id=config.TELEGRAM_CHANNEL_ID,
                 photo=image_url,
                 caption=caption,
-                reply_markup=_promo_keyboard(),
             )
             sent = True
         except Exception as e:
@@ -71,7 +53,6 @@ async def _auto_publish_news():
                 chat_id=config.TELEGRAM_CHANNEL_ID,
                 photo=card,
                 caption=caption,
-                reply_markup=_promo_keyboard(),
             )
         except Exception as e:
             logger.error(f"Failed to auto-publish news card: {e}")
@@ -99,7 +80,6 @@ async def _auto_publish_security():
                 chat_id=config.TELEGRAM_CHANNEL_ID,
                 photo=image_url,
                 caption=caption,
-                reply_markup=_promo_keyboard(),
             )
             sent = True
         except Exception as e:
@@ -111,7 +91,6 @@ async def _auto_publish_security():
                 chat_id=config.TELEGRAM_CHANNEL_ID,
                 photo=card,
                 caption=caption,
-                reply_markup=_promo_keyboard(),
             )
         except Exception as e:
             logger.error(f"Failed to auto-publish security card: {e}")
@@ -131,7 +110,6 @@ async def _auto_publish_fact():
             chat_id=config.TELEGRAM_CHANNEL_ID,
             photo=image,
             caption=caption,
-            reply_markup=_promo_keyboard(),
         )
     except Exception as e:
         logger.error(f"Failed to auto-publish fact: {e}")
@@ -158,7 +136,6 @@ async def _auto_publish_funding():
             chat_id=config.TELEGRAM_CHANNEL_ID,
             photo=image,
             caption=caption,
-            reply_markup=_promo_keyboard(),
         )
     except Exception as e:
         logger.error(f"Failed to auto-publish funding: {e}")
@@ -176,7 +153,6 @@ async def _auto_publish_promo():
             chat_id=config.TELEGRAM_CHANNEL_ID,
             photo=image,
             caption=caption,
-            reply_markup=_promo_keyboard(),
         )
     except Exception as e:
         logger.error(f"Failed to auto-publish promo: {e}")
