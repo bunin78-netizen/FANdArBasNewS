@@ -56,7 +56,6 @@ NEWS_API_BASE_URL = "https://newsapi.org/v2"
 CRYPTOPANIC_BASE_URL = "https://cryptopanic.com/api/v1"
 
 RSS_FEEDS = [
-    "https://cointelegraph.com/rss",
     "https://decrypt.co/feed",
     "https://bitcoinmagazine.com/.rss/full/",
     "https://coindesk.com/arc/outboundfeeds/rss/",

@@ -7,7 +7,7 @@
 - 📊 Цены топ монет (CoinGecko, бесплатно)
 - 🌍 Глобальный обзор рынка
 - 🔥 Трендовые монеты
-- 📰 Новости из RSS (CoinTelegraph, Decrypt, CoinDesk, Bitcoin Magazine) + NewsAPI + CryptoPanic
+- 📰 Новости из RSS (Decrypt, CoinDesk, Bitcoin Magazine) + NewsAPI + CryptoPanic
 - 💼 Реклама торгового терминала — inline-кнопка под каждым сообщением
 - ⏰ Автопостинг цен, новостей и промо по расписанию
 
